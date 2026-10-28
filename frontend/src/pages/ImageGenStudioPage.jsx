@@ -29,7 +29,8 @@ import {
   ChevronDown,
   ChevronUp,
   Eye,
-  EyeOff
+  EyeOff,
+  ScanFace
 } from 'lucide-react';
 import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
@@ -287,7 +288,7 @@ export default function ImageGenStudioPage() {
   const [numCandidates, setNumCandidates] = useState(savedPromptNode?.data?.numCandidates || 4);
   const [imageType, setImageType] = useState(savedPromptNode?.data?.imageType || 'sketch');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isInspectorExpanded, setIsInspectorExpanded] = useState(true);
+  const [isInspectorExpanded, setIsInspectorExpanded] = useState(false);
   const [activeInspectorRegion, setActiveInspectorRegion] = useState(null);
   const [apiFallbackActive, setApiFallbackActive] = useState(false);
   const [apiFallbackReason, setApiFallbackReason] = useState('');
@@ -782,7 +783,7 @@ export default function ImageGenStudioPage() {
         />
 
         {/* Prominent Selected Candidate Workspace Dock */}
-        <div className="absolute top-3 right-3 z-20 flex flex-col pointer-events-none max-w-[340px] sm:max-w-[360px] w-full">
+        <div className="absolute top-3 right-3 z-20 flex flex-col items-end pointer-events-none">
           {finalizedSketch && (() => {
             const dynamicGeometry = detectFacialLandmarks(finalizedSketch);
             const dynamicLandmarks = [
@@ -802,8 +803,34 @@ export default function ImageGenStudioPage() {
               candidateMeta: finalizedSketch
             }) : null;
 
+            if (!isInspectorExpanded) {
+              return (
+                <button
+                  type="button"
+                  onClick={() => setIsInspectorExpanded(true)}
+                  title={`Active Composite: ${finalizedSketch.label || finalizedSketch.imageId} (Click to open)`}
+                  aria-label="Active Selected Composite Inspector"
+                  className="pointer-events-auto relative w-11 h-11 rounded-full bg-navy-950/95 border-2 border-emerald-400 text-emerald-400 shadow-xl shadow-emerald-500/30 flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 hover:bg-emerald-950 hover:border-emerald-300 transition-all group"
+                >
+                  {/* Pulsing glow ring */}
+                  <span className="absolute -inset-0.5 rounded-full bg-emerald-500/40 animate-ping opacity-60 pointer-events-none" />
+
+                  {/* Centered biometric facial composite scan icon */}
+                  <ScanFace size={20} className="relative z-10 text-emerald-400 group-hover:text-emerald-300 transition-transform group-hover:scale-105" />
+
+                  {/* Pulsing live status indicator */}
+                  <span className="absolute top-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-navy-950 animate-pulse" />
+
+                  {/* Hover tooltip label */}
+                  <span className="absolute right-13 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded bg-navy-950/95 border border-emerald-500/70 text-emerald-300 text-[11px] font-mono font-bold whitespace-nowrap shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30">
+                    {finalizedSketch.label || finalizedSketch.imageId} • Active Composite
+                  </span>
+                </button>
+              );
+            }
+
             return (
-              <div className="bg-navy-900/95 border-2 border-emerald-500/70 rounded-xl shadow-2xl backdrop-blur-md pointer-events-auto overflow-hidden transition-all text-xs max-h-[calc(100vh-8.5rem)] flex flex-col">
+              <div className="max-w-[340px] sm:max-w-[360px] w-full bg-navy-900/95 border-2 border-emerald-500/70 rounded-xl shadow-2xl backdrop-blur-md pointer-events-auto overflow-hidden transition-all text-xs max-h-[calc(100vh-8.5rem)] flex flex-col">
                 {/* Dock Header */}
                 <div className="bg-navy-950 px-3.5 py-2 border-b border-slate-800 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
@@ -819,17 +846,16 @@ export default function ImageGenStudioPage() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setIsInspectorExpanded(!isInspectorExpanded)}
+                      onClick={() => setIsInspectorExpanded(false)}
                       className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 cursor-pointer"
-                      title={isInspectorExpanded ? 'Collapse inspector' : 'Expand inspector'}
+                      title="Minimize to green icon"
                     >
-                      {isInspectorExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      <ChevronUp size={14} />
                     </button>
                   </div>
                 </div>
 
-                {isInspectorExpanded && (
-                  <div className="p-3 space-y-2.5 overflow-y-auto max-h-[calc(100vh-12rem)] custom-scrollbar">
+                <div className="p-3 space-y-2.5 overflow-y-auto max-h-[calc(100vh-12rem)] custom-scrollbar">
                     {/* Provenance Indicator: Live Worker AI vs Fallback Mock */}
                     <div className="flex items-center justify-between gap-1.5">
                       {finalizedSketch.isMock ? (
@@ -997,7 +1023,6 @@ export default function ImageGenStudioPage() {
                       </Button>
                     </div>
                   </div>
-                )}
               </div>
             );
           })()}
