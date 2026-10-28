@@ -1,0 +1,76 @@
+### AI Crime Scene Sketch Generator API Requests
+@baseUrl = http://localhost:8787
+@userId = usr_investigator_1
+
+### 1. Health Check
+GET {{baseUrl}}/api/health
+
+### 2. Create Case
+POST {{baseUrl}}/api/cases
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{
+  "title": "West Midtown Convenience Store Robbery",
+  "caseNumber": "CR-2026-1182",
+  "description": "Male suspect, approx 35 years old, athletic build, high forehead, distinct dark circles under eyes",
+  "incidentDate": "2026-10-28T03:15:00Z"
+}
+
+### 3. List Cases
+GET {{baseUrl}}/api/cases
+x-user-id: {{userId}}
+
+### 4. Get Case Details
+GET {{baseUrl}}/api/cases/case_sample_001
+x-user-id: {{userId}}
+
+### 5. Generate Candidate Sketches (Single or Multiple)
+POST {{baseUrl}}/api/generations
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{
+  "caseId": "case_sample_001",
+  "prompt": "Forensic charcoal sketch of male suspect in mid-30s, prominent brow, round jawline, thin lips",
+  "negativePrompt": "photograph, color, cartoon, anime",
+  "modelName": "mock-forensic-pencil-v1",
+  "numCandidates": 3,
+  "parameters": {
+    "guidanceScale": 7.5,
+    "numInferenceSteps": 25
+  }
+}
+
+### 6. Get Image Metadata (Replace with generated image ID)
+GET {{baseUrl}}/api/images/img_sample_id
+x-user-id: {{userId}}
+
+### 7. Stream Image Binary
+GET {{baseUrl}}/api/images/img_sample_id/file
+x-user-id: {{userId}}
+
+### 8. Region Edit using Mask (Inpainting)
+POST {{baseUrl}}/api/images/img_sample_id/edits
+Content-Type: application/json
+x-user-id: {{userId}}
+
+{
+  "prompt": "Make jawline significantly sharper and more square",
+  "facialRegions": ["jawline", "chin"],
+  "mask": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  "modelName": "mock-forensic-pencil-v1"
+}
+
+### 9. Get Revision History for Case
+GET {{baseUrl}}/api/cases/case_sample_001/versions
+x-user-id: {{userId}}
+
+### 10. Restore Previous Version
+POST {{baseUrl}}/api/images/img_sample_id/restore
+x-user-id: {{userId}}
+
+### 11. View Case Audit Log
+GET {{baseUrl}}/api/cases/case_sample_001/audit
+x-user-id: {{userId}}
+

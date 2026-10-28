@@ -1,0 +1,42 @@
+{
+  "name": "ai-crime-scene-sketch-backend",
+  "version": "1.0.0",
+  "description": "AI Crime Scene Sketch Generator Backend API (Cloudflare Workers, D1, R2, Workers AI)",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev:backend": "wrangler dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev": "wrangler dev",
+    "build:backend": "wrangler deploy --dry-run --outdir dist",
+    "build:frontend": "npm --prefix frontend run build",
+    "build": "npm --prefix frontend run build",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "d1:migrate:local": "wrangler d1 execute crime-sketch-db --local --file=./migrations/0001_initial_schema.sql",
+    "d1:seed:local": "wrangler d1 execute crime-sketch-db --local --file=./migrations/0002_seed_data.sql",
+    "d1:migrate:remote": "wrangler d1 execute crime-sketch-db --remote --file=./migrations/0001_initial_schema.sql",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "cloudflare-workers",
+    "d1",
+    "r2",
+    "workers-ai",
+    "crime-scene-sketch",
+    "forensics",
+    "inpainting"
+  ],
+  "author": "TheHourned Ones (T1-32)",
+  "license": "ISC",
+  "dependencies": {
+    "hono": "^4.7.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7",
+    "wrangler": "^4.154.0"
+  }
+}
