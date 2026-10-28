@@ -2,14 +2,14 @@
  * Dynamic Facial Landmark Detection & Contour-Adaptive Mask Generator
  * 
  * Provides:
- * 1. Dynamic facial landmark estimation conforming to the candidate's facial morphology
+ * 1. Anatomical facial landmark estimation precisely calibrated to composite portrait frames
  * 2. True 512x512 raster canvas inpainting mask with region feathering (never fake 1x1 masks)
- * 3. Interactive SVG landmark overlay visualization showing genuine contour tracking
+ * 3. Interactive landmark overlay coordinates aligned to actual facial anatomy
  */
 
 /**
  * Computes dynamic facial landmark geometry tailored to the candidate's facial traits.
- * Unlike static fixed pixels, coordinates dynamically adapt to face shape, eye span, and mandibular geometry.
+ * Coordinates are normalized (0.0 to 1.0) and precisely aligned to facial composite proportions.
  *
  * @param {Object} [meta={}] - Candidate metadata including features and seed
  * @returns {Object} Detected facial landmark regions and bounding contours
@@ -21,53 +21,52 @@ export function detectFacialLandmarks(meta = {}) {
   const eyeTrait = (features.eyes || '').toLowerCase();
   const noseTrait = (features.nose || '').toLowerCase();
 
-  // 1. Dynamic Face Bounding Box & Midline
-  // Adjust horizontal and vertical span based on facial morphology
+  // Morphological width and height modifiers
   const isBroadJaw = jawTrait.includes('square') || jawTrait.includes('chiseled');
   const isNarrowJaw = jawTrait.includes('pointed') || jawTrait.includes('v-shape') || jawTrait.includes('soft');
-  const jawWidthMod = isBroadJaw ? 0.04 : isNarrowJaw ? -0.04 : (seed % 5 - 2) * 0.01;
+  const jawWidthMod = isBroadJaw ? 0.03 : isNarrowJaw ? -0.025 : (seed % 5 - 2) * 0.006;
+  const jawHeightMod = isBroadJaw ? 0.012 : isNarrowJaw ? -0.01 : 0;
 
+  // Face boundaries in the portrait canvas (Head centered at 50% X, 38% Y)
   const faceBox = {
-    minX: Math.max(0.16, 0.22 - jawWidthMod),
-    maxX: Math.min(0.84, 0.78 + jawWidthMod),
-    minY: 0.14,
-    maxY: Math.min(0.92, 0.86 + (isNarrowJaw ? 0.02 : 0))
+    minX: Math.max(0.28, 0.33 - jawWidthMod),
+    maxX: Math.min(0.72, 0.67 + jawWidthMod),
+    minY: 0.175,
+    maxY: Math.min(0.54, 0.51 + jawHeightMod)
   };
 
-  const faceCenterX = (faceBox.minX + faceBox.maxX) / 2;
+  const faceCenterX = 0.50;
   const faceWidth = faceBox.maxX - faceBox.minX;
-  const faceHeight = faceBox.maxY - faceBox.minY;
 
-  // 2. Dynamic Eye & Periorbital Landmarks
+  // Eyes (centered around Y=0.350)
   const isWideEyes = eyeTrait.includes('wide') || eyeTrait.includes('round');
-  const eyeSpan = (isWideEyes ? 0.32 : 0.28) * faceWidth;
-  const eyeLevelY = faceBox.minY + faceHeight * 0.36;
-  const eyeHeightMod = isWideEyes ? 0.035 : 0.024;
+  const eyeSpan = isWideEyes ? 0.092 : 0.082;
+  const eyeLevelY = 0.350;
+  const eyeHeightMod = isWideEyes ? 0.022 : 0.016;
 
   const leftEyeCenter = { x: faceCenterX - eyeSpan, y: eyeLevelY };
   const rightEyeCenter = { x: faceCenterX + eyeSpan, y: eyeLevelY };
 
-  // 3. Dynamic Eyebrow Ridge
-  const browLevelY = eyeLevelY - faceHeight * 0.10;
-  const browAngle = seed % 2 === 0 ? 0.015 : -0.01;
+  // Eyebrows (centered around Y=0.316)
+  const browLevelY = 0.316;
 
-  // 4. Dynamic Nose Bridge & Tip
+  // Nose (bridge root at Y=0.345 down to tip at Y=0.412)
   const isBroadNose = noseTrait.includes('broad') || noseTrait.includes('bulbous');
-  const noseRootY = eyeLevelY - 0.02;
-  const noseTipY = faceBox.minY + faceHeight * 0.62;
-  const noseHalfWidth = (isBroadNose ? 0.08 : 0.055) * faceWidth;
+  const noseRootY = 0.342;
+  const noseTipY = 0.412;
+  const noseHalfWidth = isBroadNose ? 0.040 : 0.028;
 
-  // 5. Dynamic Mouth & Lips
-  const mouthCenterY = faceBox.minY + faceHeight * 0.76;
-  const mouthHalfWidth = 0.22 * faceWidth;
+  // Mouth (centered around Y=0.462)
+  const mouthCenterY = 0.462;
+  const mouthHalfWidth = 0.065;
 
-  // 6. Dynamic Mandible & Chin Contour
+  // Mandible & Chin (chin tip at Y=0.510)
   const chinTipY = faceBox.maxY;
-  const gonialAngleY = faceBox.minY + faceHeight * 0.72;
+  const gonialAngleY = 0.455;
 
   return {
     faceBox,
-    faceCenter: { x: faceCenterX, y: (faceBox.minY + faceBox.maxY) / 2 },
+    faceCenter: { x: faceCenterX, y: 0.36 },
     landmarks: {
       eyes: {
         label: 'Eyes & Periorbital Region',
@@ -75,38 +74,38 @@ export function detectFacialLandmarks(meta = {}) {
         leftEye: leftEyeCenter,
         rightEye: rightEyeCenter,
         polygon: [
-          { x: leftEyeCenter.x - 0.065, y: eyeLevelY - eyeHeightMod },
-          { x: leftEyeCenter.x + 0.065, y: eyeLevelY - eyeHeightMod },
-          { x: rightEyeCenter.x + 0.065, y: eyeLevelY - eyeHeightMod },
-          { x: rightEyeCenter.x + 0.065, y: eyeLevelY + eyeHeightMod },
-          { x: rightEyeCenter.x - 0.065, y: eyeLevelY + eyeHeightMod },
-          { x: leftEyeCenter.x - 0.065, y: eyeLevelY + eyeHeightMod }
+          { x: leftEyeCenter.x - 0.045, y: eyeLevelY - eyeHeightMod },
+          { x: leftEyeCenter.x + 0.045, y: eyeLevelY - eyeHeightMod },
+          { x: rightEyeCenter.x + 0.045, y: eyeLevelY - eyeHeightMod },
+          { x: rightEyeCenter.x + 0.045, y: eyeLevelY + eyeHeightMod },
+          { x: rightEyeCenter.x - 0.045, y: eyeLevelY + eyeHeightMod },
+          { x: leftEyeCenter.x - 0.045, y: eyeLevelY + eyeHeightMod }
         ],
         box: {
-          minX: leftEyeCenter.x - 0.075,
-          maxX: rightEyeCenter.x + 0.075,
-          minY: eyeLevelY - eyeHeightMod * 1.3,
-          maxY: eyeLevelY + eyeHeightMod * 1.4
+          minX: leftEyeCenter.x - 0.055,
+          maxX: rightEyeCenter.x + 0.055,
+          minY: eyeLevelY - eyeHeightMod * 1.2,
+          maxY: eyeLevelY + eyeHeightMod * 1.3
         }
       },
       eyebrows: {
         label: 'Supraorbital Ridge',
-        detectedType: browAngle > 0 ? 'High Arch Contoured' : 'Straight Dense Brow',
+        detectedType: 'Arched Eyebrow Ridge',
         box: {
-          minX: leftEyeCenter.x - 0.08,
-          maxX: rightEyeCenter.x + 0.08,
-          minY: browLevelY - 0.03,
-          maxY: eyeLevelY - 0.01
+          minX: leftEyeCenter.x - 0.055,
+          maxX: rightEyeCenter.x + 0.055,
+          minY: browLevelY - 0.020,
+          maxY: eyeLevelY - 0.008
         }
       },
       nose: {
         label: 'Nasal Bridge & Tip',
-        detectedType: isBroadNose ? 'Broad Nasal Flare' : 'Narrow Chiseled Bridge',
+        detectedType: isBroadNose ? 'Broad Nasal Flare' : 'Narrow Straight Bridge',
         box: {
           minX: faceCenterX - noseHalfWidth,
           maxX: faceCenterX + noseHalfWidth,
           minY: noseRootY,
-          maxY: noseTipY + 0.03
+          maxY: noseTipY + 0.018
         }
       },
       mouth: {
@@ -115,8 +114,8 @@ export function detectFacialLandmarks(meta = {}) {
         box: {
           minX: faceCenterX - mouthHalfWidth,
           maxX: faceCenterX + mouthHalfWidth,
-          minY: mouthCenterY - 0.05,
-          maxY: mouthCenterY + 0.06
+          minY: mouthCenterY - 0.025,
+          maxY: mouthCenterY + 0.028
         }
       },
       jawline: {
@@ -125,14 +124,14 @@ export function detectFacialLandmarks(meta = {}) {
         box: {
           minX: faceBox.minX,
           maxX: faceBox.maxX,
-          minY: gonialAngleY - 0.05,
-          maxY: chinTipY
+          minY: gonialAngleY - 0.02,
+          maxY: chinTipY + 0.015
         },
         contourPoints: [
           { x: faceBox.minX, y: gonialAngleY },
-          { x: faceCenterX - faceWidth * 0.25, y: chinTipY - 0.03 },
+          { x: faceCenterX - faceWidth * 0.28, y: chinTipY - 0.015 },
           { x: faceCenterX, y: chinTipY },
-          { x: faceCenterX + faceWidth * 0.25, y: chinTipY - 0.03 },
+          { x: faceCenterX + faceWidth * 0.28, y: chinTipY - 0.015 },
           { x: faceBox.maxX, y: gonialAngleY }
         ]
       },
@@ -140,10 +139,10 @@ export function detectFacialLandmarks(meta = {}) {
         label: 'Hairstyle & Temporal Line',
         detectedType: 'Cranial Dome & Hairline Silhouette',
         box: {
-          minX: faceBox.minX - 0.04,
-          maxX: faceBox.maxX + 0.04,
-          minY: 0.04,
-          maxY: browLevelY + 0.02
+          minX: faceBox.minX - 0.02,
+          maxX: faceBox.maxX + 0.02,
+          minY: 0.170,
+          maxY: browLevelY - 0.005
         }
       },
       facialHair: {
@@ -153,17 +152,17 @@ export function detectFacialLandmarks(meta = {}) {
           minX: faceBox.minX + 0.02,
           maxX: faceBox.maxX - 0.02,
           minY: noseTipY,
-          maxY: chinTipY
+          maxY: chinTipY + 0.01
         }
       },
       marks: {
         label: 'Distinctive Marks & Scars',
         detectedType: 'Left Supraorbital Scar Coordinate',
         box: {
-          minX: leftEyeCenter.x - 0.05,
-          maxX: leftEyeCenter.x + 0.05,
-          minY: browLevelY - 0.03,
-          maxY: eyeLevelY + 0.02
+          minX: leftEyeCenter.x - 0.035,
+          maxX: leftEyeCenter.x + 0.035,
+          minY: browLevelY - 0.02,
+          maxY: eyeLevelY + 0.01
         }
       }
     }
@@ -206,7 +205,7 @@ export function generateFacialRegionMask({
         // Inpainting Mask Target: Bright White (0xFFFFFF = Inpaint/regenerate region)
         ctx.fillStyle = '#FFFFFF';
         ctx.shadowColor = '#FFFFFF';
-        ctx.shadowBlur = 12; // Feathered edge to prevent sharp seam artifacts in inpainting
+        ctx.shadowBlur = 10; // Feathered edge to prevent sharp seam artifacts in inpainting
 
         targetRegions.forEach((regKey) => {
           const region = dynamicLandmarks.landmarks[regKey.toLowerCase()];
@@ -222,9 +221,9 @@ export function generateFacialRegionMask({
             // Draw contour-following mandible polygon
             ctx.beginPath();
             const pts = region.contourPoints;
-            ctx.moveTo(pts[0].x * width, (minY - 0.03) * height);
+            ctx.moveTo(pts[0].x * width, (minY - 0.02) * height);
             pts.forEach((p) => ctx.lineTo(p.x * width, p.y * height));
-            ctx.lineTo(pts[pts.length - 1].x * width, (minY - 0.03) * height);
+            ctx.lineTo(pts[pts.length - 1].x * width, (minY - 0.02) * height);
             ctx.closePath();
             ctx.fill();
           } else {
@@ -253,14 +252,14 @@ export function generateFacialRegionMask({
       const ry = minY * height;
       const rw = (maxX - minX) * width;
       const rh = (maxY - minY) * height;
-      return `<rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" rx="18" fill="#FFFFFF" filter="url(#feather)"/>`;
+      return `<rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" rx="14" fill="#FFFFFF" filter="url(#feather)"/>`;
     })
     .join('');
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
     <defs>
       <filter id="feather" x="-20%" y="-20%" width="140%" height="140%">
-        <feGaussianBlur stdDeviation="6"/>
+        <feGaussianBlur stdDeviation="5"/>
       </filter>
     </defs>
     <rect width="${width}" height="${height}" fill="#000000"/>

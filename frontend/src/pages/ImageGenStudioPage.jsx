@@ -782,14 +782,14 @@ export default function ImageGenStudioPage() {
         />
 
         {/* Prominent Selected Candidate Workspace Dock */}
-        <div className="absolute top-4 right-4 z-20 flex flex-col pointer-events-none max-w-sm w-full">
+        <div className="absolute top-3 right-3 z-20 flex flex-col pointer-events-none max-w-[340px] sm:max-w-[360px] w-full">
           {finalizedSketch && (() => {
             const dynamicGeometry = detectFacialLandmarks(finalizedSketch);
             const dynamicLandmarks = [
-              { id: 'hair', label: 'Hair', x: 50, y: Math.round(dynamicGeometry.landmarks.hair.box.minY * 100 + 8) },
+              { id: 'hair', label: 'Hairline', x: 50, y: Math.round(dynamicGeometry.landmarks.hair.box.minY * 100 + 2) },
               { id: 'eyebrows', label: 'Eyebrows', x: 50, y: Math.round(((dynamicGeometry.landmarks.eyebrows.box.minY + dynamicGeometry.landmarks.eyebrows.box.maxY) / 2) * 100) },
               { id: 'eyes', label: 'Eyes', x: 50, y: Math.round(dynamicGeometry.landmarks.eyes.leftEye.y * 100) },
-              { id: 'nose', label: 'Nose', x: 50, y: Math.round(((dynamicGeometry.landmarks.nose.box.minY + dynamicGeometry.landmarks.nose.box.maxY) / 2) * 100) },
+              { id: 'nose', label: 'Nose', x: 50, y: Math.round(dynamicGeometry.landmarks.nose.box.maxY * 100 - 1) },
               { id: 'mouth', label: 'Mouth', x: 50, y: Math.round(((dynamicGeometry.landmarks.mouth.box.minY + dynamicGeometry.landmarks.mouth.box.maxY) / 2) * 100) },
               { id: 'jawline', label: 'Jawline', x: 50, y: Math.round(dynamicGeometry.landmarks.jawline.box.maxY * 100) }
             ];
@@ -803,9 +803,9 @@ export default function ImageGenStudioPage() {
             }) : null;
 
             return (
-              <div className="bg-navy-900/95 border-2 border-emerald-500/70 rounded-xl shadow-2xl backdrop-blur-md pointer-events-auto overflow-hidden transition-all text-xs">
+              <div className="bg-navy-900/95 border-2 border-emerald-500/70 rounded-xl shadow-2xl backdrop-blur-md pointer-events-auto overflow-hidden transition-all text-xs max-h-[calc(100vh-8.5rem)] flex flex-col">
                 {/* Dock Header */}
-                <div className="bg-navy-950 px-3.5 py-2 border-b border-slate-800 flex items-center justify-between">
+                <div className="bg-navy-950 px-3.5 py-2 border-b border-slate-800 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
                     <span className="font-bold text-white uppercase tracking-wider text-[11px]">
@@ -829,25 +829,25 @@ export default function ImageGenStudioPage() {
                 </div>
 
                 {isInspectorExpanded && (
-                  <div className="p-3 space-y-3">
+                  <div className="p-3 space-y-2.5 overflow-y-auto max-h-[calc(100vh-12rem)] custom-scrollbar">
                     {/* Provenance Indicator: Live Worker AI vs Fallback Mock */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-1.5">
                       {finalizedSketch.isMock ? (
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-950/80 border border-amber-500/70 text-amber-300 text-[10px] font-mono font-bold">
-                          <AlertTriangle size={11} className="text-amber-400" />
-                          <span>MOCK PREVIEW (API FALLBACK)</span>
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-950/80 border border-amber-500/70 text-amber-300 text-[10px] font-mono font-bold truncate">
+                          <AlertTriangle size={11} className="text-amber-400 shrink-0" />
+                          <span className="truncate">MOCK PREVIEW</span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/70 text-emerald-300 text-[10px] font-mono font-bold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span>WORKER AI COMPOSITE</span>
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/70 text-emerald-300 text-[10px] font-mono font-bold truncate">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                          <span className="truncate">WORKER AI COMPOSITE</span>
                         </div>
                       )}
 
                       <button
                         type="button"
                         onClick={() => setShowMaskPreview(!showMaskPreview)}
-                        className={`px-2 py-0.5 rounded text-[10px] font-mono border flex items-center gap-1 cursor-pointer transition-colors ${
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono border flex items-center gap-1 cursor-pointer transition-colors shrink-0 ${
                           showMaskPreview
                             ? 'bg-rose-500/20 border-rose-400 text-rose-300'
                             : 'bg-navy-950 border-slate-700 text-slate-300 hover:text-white hover:border-slate-500'
@@ -859,7 +859,7 @@ export default function ImageGenStudioPage() {
                     </div>
 
                     {/* Image Preview with Dynamic Facial Landmark Overlays */}
-                    <div className="relative aspect-[4/5] max-h-56 bg-navy-950 rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center">
+                    <div className="relative aspect-[400/480] max-h-48 w-full bg-navy-950 rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center">
                       <img
                         src={finalizedSketch.imageUrl || createMockCandidatePreview(finalizedSketch.imageType || 'sketch', finalizedSketch.seed || 1042)}
                         alt={finalizedSketch.imageId}
@@ -897,7 +897,7 @@ export default function ImageGenStudioPage() {
                             <div
                               className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${
                                 isHighlighted
-                                  ? 'bg-sky-500 border-white shadow-lg shadow-sky-500/50'
+                                  ? 'bg-sky-500 border-white shadow-lg shadow-sky-500/50 ring-2 ring-sky-300/40'
                                   : 'bg-navy-900 border-sky-400'
                               }`}
                             >
@@ -914,22 +914,22 @@ export default function ImageGenStudioPage() {
 
                       {/* Active Region Target Watermark */}
                       {activeInspectorRegion && (
-                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-sky-950/90 border border-sky-500 text-sky-200 text-[9px] font-mono font-bold uppercase">
-                          Targeting: {activeInspectorRegion}
+                        <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-sky-950/90 border border-sky-500 text-sky-200 text-[9px] font-mono font-bold uppercase shadow">
+                          Target: {activeInspectorRegion}
                         </div>
                       )}
                     </div>
 
                     {/* Contour Alignment Feedback */}
-                    <div className="bg-navy-950/80 p-2 rounded border border-slate-800 text-[10px] font-mono text-slate-300 space-y-1">
+                    <div className="bg-navy-950/80 p-2 rounded border border-slate-800 text-[10px] font-mono text-slate-300 space-y-0.5">
                       <div className="flex items-center justify-between text-sky-400 font-bold">
-                        <span>Landmark Contour Segmentation:</span>
+                        <span>Landmark Segmentation:</span>
                         <span className="text-emerald-400">Adaptive</span>
                       </div>
                       <div className="text-[10px] text-slate-400 leading-tight">
                         {activeDef
-                          ? `Region [${activeInspectorRegion.toUpperCase()}]: ${activeDef.detectedType} (Span: ${(activeDef.box.minX * 100).toFixed(0)}%-${(activeDef.box.maxX * 100).toFixed(0)}% X, ${(activeDef.box.minY * 100).toFixed(0)}%-${(activeDef.box.maxY * 100).toFixed(0)}% Y)`
-                          : `Detected Face Bounds: [${(dynamicGeometry.faceBox.minX * 100).toFixed(0)}%-${(dynamicGeometry.faceBox.maxX * 100).toFixed(0)}% X] conforming to ${finalizedSketch.features?.jawline || 'Sharp Square'} morphology.`}
+                          ? `Region [${activeInspectorRegion.toUpperCase()}]: ${activeDef.detectedType} (${(activeDef.box.minX * 100).toFixed(0)}%-${(activeDef.box.maxX * 100).toFixed(0)}% X, ${(activeDef.box.minY * 100).toFixed(0)}%-${(activeDef.box.maxY * 100).toFixed(0)}% Y)`
+                          : `Face Bounds: [${(dynamicGeometry.faceBox.minX * 100).toFixed(0)}%-${(dynamicGeometry.faceBox.maxX * 100).toFixed(0)}% X, ${(dynamicGeometry.faceBox.minY * 100).toFixed(0)}%-${(dynamicGeometry.faceBox.maxY * 100).toFixed(0)}% Y]`}
                       </div>
                     </div>
 
@@ -937,7 +937,7 @@ export default function ImageGenStudioPage() {
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
                         <span>Target Anatomical Region:</span>
-                        <span className="text-emerald-400">512×512 Mask Ready</span>
+                        <span className="text-emerald-400 font-semibold">512×512 Mask Ready</span>
                       </div>
                       <div className="grid grid-cols-3 gap-1">
                         {['eyes', 'eyebrows', 'nose', 'mouth', 'jawline', 'hair'].map((region) => (
