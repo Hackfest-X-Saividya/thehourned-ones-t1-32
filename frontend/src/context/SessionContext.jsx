@@ -5,7 +5,7 @@ const SessionContext = createContext();
 
 const INITIAL_SKETCH = {
   imageId: 'IMG-SKETCH-1042',
-  imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=512&h=512&q=80',
+  imageUrl: '/api/images/IMG-SKETCH-1042/file',
   prompt: 'Male, early 30s, sharp square jawline, deep-set almond eyes, straight narrow nose, 3-day stubble, vertical scar above left eyebrow',
   seed: 1042,
   iteration: 1,
@@ -49,6 +49,48 @@ export function SessionProvider({ children }) {
 
   // Selected Finalized Composite for DB verification and high-res export
   const [finalizedSketch, setFinalizedSketch] = useState(INITIAL_SKETCH);
+
+  // Persisted Graph Canvas Nodes & Edges across page navigations
+  const [canvasNodes, setCanvasNodes] = useState(null);
+  const [canvasEdges, setCanvasEdges] = useState(null);
+
+  // Criminal Database Integrator State: 'SYNTHETIC_DEMO' | 'CUSTOM_IMPORTED'
+  const [registryMode, setRegistryMode] = useState(() => {
+    try {
+      return localStorage.getItem('forensic_registry_mode') || 'SYNTHETIC_DEMO';
+    } catch {
+      return 'SYNTHETIC_DEMO';
+    }
+  });
+
+  const [customDbRecords, setCustomDbRecords] = useState(() => {
+    try {
+      const saved = localStorage.getItem('forensic_custom_db');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const updateCustomDatabase = useCallback((records, mode = 'CUSTOM_IMPORTED') => {
+    setCustomDbRecords(records);
+    setRegistryMode(mode);
+    try {
+      localStorage.setItem('forensic_custom_db', JSON.stringify(records));
+      localStorage.setItem('forensic_registry_mode', mode);
+    } catch {
+      // Ignore
+    }
+  }, []);
+
+  const resetToDefaultRegistry = useCallback(() => {
+    setRegistryMode('SYNTHETIC_DEMO');
+    try {
+      localStorage.setItem('forensic_registry_mode', 'SYNTHETIC_DEMO');
+    } catch {
+      // Ignore
+    }
+  }, []);
 
   // Reusable Toasts
   const [toasts, setToasts] = useState([]);
@@ -185,11 +227,20 @@ export function SessionProvider({ children }) {
     setFinalizedSketch(newSketch);
   }, []);
 
-  // Finalizes the sketch for database search & PDF export
+  // Adds multiple candidate sketches generated in stage 1
+  const addSessionSketches = useCallback((newSketches, activeCandidateIndex = 0) => {
+    if (!newSketches || newSketches.length === 0) return;
+    setSessionImages((prev) => [...newSketches, ...prev]);
+    if (newSketches[activeCandidateIndex]) {
+      setFinalizedSketch(newSketches[activeCandidateIndex]);
+    }
+  }, []);
+
+  // Finalizes the sketch as active base image for refinement, database search & PDF export
   const finalizeSketch = useCallback((sketch) => {
     setFinalizedSketch(sketch);
-    recordAuditAction('FINALIZED_SKETCH_FOR_VERIFICATION', sketch.imageId, `Selected iteration #${sketch.iteration}`);
-    addToast(`Sketch ${sketch.imageId} finalized for Law Enforcement DB verification.`, 'success');
+    recordAuditAction('SELECTED_AS_BASE_IMAGE', sketch.imageId, `Selected iteration #${sketch.iteration} as active base composite for refinement`);
+    addToast(`Sketch ${sketch.imageId} selected as Base Image for refinement.`, 'success');
   }, [recordAuditAction, addToast]);
 
   return (
@@ -201,6 +252,7 @@ export function SessionProvider({ children }) {
         caseInfo,
         sessionImages,
         addSessionSketch,
+        addSessionSketches,
         finalizedSketch,
         finalizeSketch,
         auditLogs,
@@ -209,7 +261,16 @@ export function SessionProvider({ children }) {
         restoreChainIntegrity,
         toasts,
         addToast,
-        removeToast
+        removeToast,
+        canvasNodes,
+        setCanvasNodes,
+        canvasEdges,
+        setCanvasEdges,
+        registryMode,
+        setRegistryMode,
+        customDbRecords,
+        updateCustomDatabase,
+        resetToDefaultRegistry
       }}
     >
       {children}

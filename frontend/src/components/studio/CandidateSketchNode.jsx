@@ -50,8 +50,8 @@ export default function CandidateSketchNode({ data }) {
         </div>
 
         {isFinalized ? (
-          <span className="text-[10px] font-mono font-bold text-emerald-400 flex items-center gap-1 bg-emerald-950/90 border border-emerald-700 px-1.5 py-0.5 rounded">
-            <CheckCircle2 size={11} /> FINALIZED
+          <span className="text-[10px] font-mono font-bold text-emerald-400 flex items-center gap-1 bg-emerald-950/90 border border-emerald-700 px-1.5 py-0.5 rounded shadow-sm">
+            <CheckCircle2 size={11} /> BASE IMAGE
           </span>
         ) : (
           <span className="text-[10px] font-mono text-slate-400">
@@ -68,7 +68,7 @@ export default function CandidateSketchNode({ data }) {
           className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-[1.02]"
         />
         <div className="absolute bottom-2 left-2 right-2 bg-navy-950/90 backdrop-blur-sm px-2 py-1 rounded border border-slate-800/80 flex items-center justify-between text-[10px] font-mono text-slate-300">
-          <span>{sketch.parentId ? `Parent: ${sketch.parentId}` : 'Root Composite'}</span>
+          <span>{sketch.parentId ? `Parent: ${sketch.parentId}` : 'Stage 1 Candidate'}</span>
           <span className="text-sky-400">Charcoal Style</span>
         </div>
       </div>
@@ -91,18 +91,18 @@ export default function CandidateSketchNode({ data }) {
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-1.5 pt-1">
-          {/* Finalize Button */}
+          {/* Base Selection Button */}
           <button
             type="button"
             onClick={() => onFinalize && onFinalize(sketch)}
             className={`w-full py-1.5 px-2 rounded text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
               isFinalized
-                ? 'bg-emerald-500/20 border border-emerald-500 text-emerald-300 cursor-default'
-                : 'bg-emerald-500 hover:bg-emerald-400 text-navy-950'
+                ? 'bg-emerald-500/20 border border-emerald-500 text-emerald-300 shadow-sm cursor-default'
+                : 'bg-emerald-500 hover:bg-emerald-400 text-navy-950 shadow-sm hover:shadow'
             }`}
           >
             <CheckCircle2 size={12} />
-            <span>{isFinalized ? 'Target Active' : 'Finalize'}</span>
+            <span>{isFinalized ? 'Active Base' : 'Select as Base'}</span>
           </button>
 
           {/* Refine / Branch Button */}

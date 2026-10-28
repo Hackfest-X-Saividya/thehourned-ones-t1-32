@@ -1,24 +1,13 @@
-# Dependencies
-node_modules
-frontend/node_modules
-
-# Production builds
-dist
-frontend/dist
-
-# Environment variables & secrets (do not expose keys)
-.env.local
-.env.*.local
-frontend/.env.local
-frontend/.env.*.local
-
-# Vite and IDE artifacts
-.vite
-.vscode
-.idea
-*.log
-npm-debug.log*
-
-# OS artifacts
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+.wrangler/
+.mf/
+coverage/
 .DS_Store
-Thumbs.db
+*.log
+.env
+.dev.vars
+.vite/
+frontend/.vite/

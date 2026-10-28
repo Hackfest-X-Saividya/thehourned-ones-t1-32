@@ -4,7 +4,10 @@ import FinalizedSuspectPanel from '../components/verification/FinalizedSuspectPa
 import DbSearchControls from '../components/verification/DbSearchControls';
 import CriminalMatchCard from '../components/verification/CriminalMatchCard';
 import FeatureComparisonModal from '../components/verification/FeatureComparisonModal';
+import DatabaseIntegratorModal from '../components/verification/DatabaseIntegratorModal';
+import ResponsibleAiNoticeModal from '../components/verification/ResponsibleAiNoticeModal';
 import { fetchCriminalRecords, verifySuspectInDb } from '../services/api';
+import { calculateSuspectMatch } from '../services/mockCriminalDb';
 import {
   ShieldAlert,
   UserCheck,
@@ -13,12 +16,23 @@ import {
   AlertTriangle,
   Database,
   RefreshCw,
-  Info
+  Info,
+  Sliders,
+  Sparkles
 } from 'lucide-react';
 import Button from '../components/common/Button';
 
 export default function DbVerificationPage() {
-  const { finalizedSketch, recordAuditAction, addToast } = useSession();
+  const {
+    finalizedSketch,
+    recordAuditAction,
+    addToast,
+    registryMode = 'SYNTHETIC_DEMO',
+    setRegistryMode,
+    customDbRecords = [],
+    updateCustomDatabase,
+    resetToDefaultRegistry
+  } = useSession();
 
   const [isLoading, setIsLoading] = useState(true);
   const [records, setRecords] = useState([]);
@@ -31,10 +45,12 @@ export default function DbVerificationPage() {
   const [sortBy, setSortBy] = useState('score_desc');
   const [minScore, setMinScore] = useState(30);
 
-  // Modal inspection state
+  // Modal inspection & integration state
   const [selectedSuspectForModal, setSelectedSuspectForModal] = useState(null);
+  const [isIntegratorOpen, setIsIntegratorOpen] = useState(false);
+  const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
 
-  // Execute database verification comparison on mount or when finalized sketch changes
+  // Execute database verification comparison on mount or when finalized sketch / database source changes
   useEffect(() => {
     async function runVerification() {
       if (!finalizedSketch) {
@@ -43,23 +59,46 @@ export default function DbVerificationPage() {
       }
       setIsLoading(true);
       try {
-        const result = await verifySuspectInDb({ finalizedSketch });
-        setRecords(result.matches || []);
-        setTopMatch(result.topMatch || null);
-        await recordAuditAction(
-          'EXECUTED_CRIMINAL_DB_COMPARISON',
-          finalizedSketch.imageId,
-          `Evaluated ${result.evaluatedRecordsCount || 0} synthetic criminal registry records`
-        );
+        if (registryMode === 'CUSTOM_IMPORTED' && customDbRecords && customDbRecords.length > 0) {
+          // Custom Department Offender Database
+          await new Promise((r) => setTimeout(r, 200));
+          const scored = customDbRecords.map((record) => {
+            const evalResult = calculateSuspectMatch(finalizedSketch.features, record);
+            return {
+              ...record,
+              ...evalResult
+            };
+          });
+
+          scored.sort((a, b) => b.combinedScore - a.combinedScore);
+          setRecords(scored);
+          setTopMatch(scored[0] || null);
+
+          await recordAuditAction(
+            'EXECUTED_CUSTOM_DB_COMPARISON',
+            finalizedSketch.imageId,
+            `Evaluated ${customDbRecords.length} user-integrated custom department criminal records`
+          );
+        } else {
+          // Default Synthetic Police Registry
+          const result = await verifySuspectInDb({ finalizedSketch });
+          setRecords(result.matches || []);
+          setTopMatch(result.topMatch || null);
+          await recordAuditAction(
+            'EXECUTED_CRIMINAL_DB_COMPARISON',
+            finalizedSketch.imageId,
+            `Evaluated ${result.evaluatedRecordsCount || 0} synthetic criminal registry records`
+          );
+        }
       } catch (err) {
         console.error('DB Verification failed:', err);
-        addToast('Error querying synthetic criminal registry.', 'danger');
+        addToast('Error querying criminal registry.', 'danger');
       } finally {
         setIsLoading(false);
       }
     }
     runVerification();
-  }, [finalizedSketch]);
+  }, [finalizedSketch, registryMode, customDbRecords]);
 
   // Client-side filtering & sorting of retrieved scored records
   const filteredRecords = useMemo(() => {
@@ -69,16 +108,16 @@ export default function DbVerificationPage() {
       const q = searchQuery.toLowerCase();
       list = list.filter(
         (r) =>
-          r.fullName.toLowerCase().includes(q) ||
-          r.alias.toLowerCase().includes(q) ||
-          r.firNumber.toLowerCase().includes(q) ||
-          r.crimeCategory.toLowerCase().includes(q) ||
-          r.lastKnownLocation.toLowerCase().includes(q)
+          (r.fullName && r.fullName.toLowerCase().includes(q)) ||
+          (r.alias && r.alias.toLowerCase().includes(q)) ||
+          (r.firNumber && r.firNumber.toLowerCase().includes(q)) ||
+          (r.crimeCategory && r.crimeCategory.toLowerCase().includes(q)) ||
+          (r.lastKnownLocation && r.lastKnownLocation.toLowerCase().includes(q))
       );
     }
 
     if (selectedCategory !== 'ALL') {
-      list = list.filter((r) => r.crimeCategory.includes(selectedCategory));
+      list = list.filter((r) => r.crimeCategory && r.crimeCategory.includes(selectedCategory));
     }
 
     if (selectedStatus !== 'ALL') {
@@ -101,43 +140,34 @@ export default function DbVerificationPage() {
   }, [records, searchQuery, selectedCategory, selectedStatus, sortBy, minScore]);
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      {/* Page Title & Synthetic Demonstration Disclaimer */}
-      <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
-              <Database size={18} className="text-sky-400" />
-              <span>Criminal Record Facial Feature Comparison Engine</span>
-            </h1>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Dual-metric comparison combining 512-d biometric embedding similarity (60% weight) with
-              structured anatomical trait alignment (40% weight).
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 bg-navy-900 border border-slate-800 px-3 py-1.5 rounded-lg text-xs font-mono text-slate-400">
-            <span>REGISTRY STATUS:</span>
-            <span className="text-sky-400 font-bold">SYNTHETIC DEMO MODE</span>
-          </div>
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-5">
+      {/* Minimal Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+        <div className="flex items-center gap-2.5">
+          <Database size={18} className="text-sky-400 shrink-0" />
+          <h1 className="text-sm sm:text-base font-bold text-white tracking-wide">
+            Criminal Record Facial Feature Comparison Engine
+          </h1>
         </div>
 
-        {/* Responsible AI & Non-Biometric Evidence Guardrail Notice */}
-        <div className="p-3.5 rounded-xl bg-amber-950/40 border border-amber-800/80 text-xs text-amber-200 flex items-start gap-3">
-          <AlertTriangle size={18} className="text-amber-400 shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <div className="font-bold uppercase tracking-wider text-[11px] text-amber-300">
-              Mandatory Responsible AI & Forensic Evidence Notice
-            </div>
-            <div className="text-[11px] leading-relaxed text-amber-100/90">
-              All criminal records, FIR numbers, mugshots, and similarity scores presented in this
-              module are <strong>SYNTHETIC DEMONSTRATION DATA</strong>. This software does not
-              perform real-world biometric identification and does not access active operational
-              police databases. Similarity scores are investigative exploration aids only and
-              must never be presented as proof of identity, criminality, or guilt.
-            </div>
-          </div>
-        </div>
+        {/* Database Integrator Button / Status Pill */}
+        <button
+          type="button"
+          onClick={() => setIsIntegratorOpen(true)}
+          className="flex items-center gap-2 bg-navy-900 hover:bg-slate-800 border border-slate-700/80 hover:border-sky-500/60 px-3 py-1.5 rounded-lg text-xs font-mono transition-all text-slate-300 hover:text-white cursor-pointer shadow-sm shrink-0"
+          title="Click to integrate custom departmental database or switch datasets"
+        >
+          <span className={`w-2 h-2 rounded-full ${registryMode === 'CUSTOM_IMPORTED' && customDbRecords?.length > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-sky-400'}`} />
+          <span className="text-slate-400 text-[11px]">Database:</span>
+          <span className="font-bold text-white text-xs">
+            {registryMode === 'CUSTOM_IMPORTED' && customDbRecords?.length > 0
+              ? `Custom (${customDbRecords.length})`
+              : 'Synthetic Demo'}
+          </span>
+          <span className="text-[10px] text-sky-400 bg-sky-950/80 px-1.5 py-0.5 rounded border border-sky-850 ml-0.5">
+            Integrate DB
+          </span>
+        </button>
       </div>
 
       {/* Main Grid: Left Panel (Query Input) + Right Panel (Database Match Results) */}
@@ -183,7 +213,7 @@ export default function DbVerificationPage() {
             <div className="bg-navy-900 border border-slate-800 rounded-xl p-4 flex items-center gap-3">
               <Info size={18} className="text-sky-400 shrink-0" />
               <div className="text-xs text-slate-300">
-                No synthetic criminal record met the 75% or higher high-confidence threshold. Closest
+                No criminal record met the 75% or higher high-confidence threshold in this registry. Closest
                 candidate records ranked by dual similarity below.
               </div>
             </div>
@@ -207,14 +237,14 @@ export default function DbVerificationPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
               <span>EVALUATED REGISTRY RECORDS ({filteredRecords.length})</span>
-              <span>SYNTHETIC PROFILES</span>
+              <span>{registryMode === 'CUSTOM_IMPORTED' ? 'DEPARTMENT DATABASE' : 'SYNTHETIC PROFILES'}</span>
             </div>
 
             {isLoading ? (
               <div className="bg-navy-900 border border-slate-800 rounded-xl p-12 text-center space-y-3">
                 <RefreshCw size={24} className="animate-spin text-sky-400 mx-auto" />
                 <div className="text-xs font-mono text-slate-400">
-                  Executing dual-metric facial feature comparison across synthetic registry...
+                  Executing dual-metric facial feature comparison across active registry...
                 </div>
               </div>
             ) : filteredRecords.length === 0 ? (
@@ -232,6 +262,7 @@ export default function DbVerificationPage() {
                 <CriminalMatchCard
                   key={suspect.suspectId}
                   suspect={suspect}
+                  queryFeatures={finalizedSketch?.features}
                   onInspectComparison={(s) => setSelectedSuspectForModal(s)}
                 />
               ))
@@ -246,6 +277,28 @@ export default function DbVerificationPage() {
         onClose={() => setSelectedSuspectForModal(null)}
         finalizedSketch={finalizedSketch}
         suspectRecord={selectedSuspectForModal}
+      />
+
+      {/* Database Integrator Modal */}
+      <DatabaseIntegratorModal
+        isOpen={isIntegratorOpen}
+        onClose={() => setIsIntegratorOpen(false)}
+        activeMode={registryMode}
+        customRecords={customDbRecords}
+        onApplyDatabase={(imported, mode) => {
+          updateCustomDatabase(imported, mode);
+          addToast(`Custom database connected with ${imported.length} suspects! Re-executing match engine...`, 'success');
+        }}
+        onResetDefault={() => {
+          resetToDefaultRegistry();
+          addToast('Reverted to default Synthetic Demo Registry.', 'info');
+        }}
+      />
+
+      {/* Responsible AI Notice Full Disclosure Modal */}
+      <ResponsibleAiNoticeModal
+        isOpen={isNoticeModalOpen}
+        onClose={() => setIsNoticeModalOpen(false)}
       />
     </div>
   );

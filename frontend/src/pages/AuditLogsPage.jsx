@@ -1,68 +1,10 @@
 import React from 'react';
 import BlockchainStatusHeader from '../components/audit/BlockchainStatusHeader';
 import AuditLogTable from '../components/audit/AuditLogTable';
-import { Lock, ShieldCheck, History, Layers, Info } from 'lucide-react';
 
 export default function AuditLogsPage() {
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      {/* Page Title & Context Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
-            <ShieldCheck size={18} className="text-sky-400" />
-            <span>Forensic Custody Ledger & Access Audit History</span>
-          </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Cryptographic proof-of-custody logging utilizing SHA-256 block hashing across session
-            events, image generations, and database queries.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 font-mono text-xs">
-          <span className="text-slate-400">CHAIN PROTOCOL:</span>
-          <span className="text-emerald-400 font-bold bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded">
-            SHA-256 HASH CHAIN
-          </span>
-        </div>
-      </div>
-
-      {/* Forensic Audit Architecture Clarification Banner */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-        <div className="bg-navy-900 border border-slate-800 rounded-xl p-3.5 space-y-1">
-          <div className="flex items-center gap-1.5 font-bold text-sky-400 font-mono text-[11px] uppercase">
-            <Lock size={13} />
-            <span>1. Access Audit History</span>
-          </div>
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            Records which officer ID logged in, initiated witness interviews, and exported dossiers,
-            establishing who interacted with case data.
-          </p>
-        </div>
-
-        <div className="bg-navy-900 border border-slate-800 rounded-xl p-3.5 space-y-1">
-          <div className="flex items-center gap-1.5 font-bold text-emerald-400 font-mono text-[11px] uppercase">
-            <History size={13} />
-            <span>2. Image Revision History</span>
-          </div>
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            Tracks parent-to-child composite tree mutations, seeds, witness prompt deltas, and anatomical
-            refinements across iterations v1 to vN.
-          </p>
-        </div>
-
-        <div className="bg-navy-900 border border-slate-800 rounded-xl p-3.5 space-y-1">
-          <div className="flex items-center gap-1.5 font-bold text-purple-400 font-mono text-[11px] uppercase">
-            <Layers size={13} />
-            <span>3. Cryptographic Verification</span>
-          </div>
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            Each block's hash seals the preceding block's hash. Any modification to past entries
-            breaks downstream cryptographic links instantaneously.
-          </p>
-        </div>
-      </div>
-
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-5">
       {/* Blockchain Status & Integrity Verification Header */}
       <BlockchainStatusHeader />
 

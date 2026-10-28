@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
-import { GitBranch, Sparkles, X, SlidersHorizontal, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { GitBranch, Sparkles, X, SlidersHorizontal, RefreshCw, Mic, MicOff } from 'lucide-react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
+import { startVoiceRecognition, isSpeechRecognitionSupported } from '../../utils/speech';
 
 export default function RefinementDrawer({
   isOpen,
   onClose,
   parentSketch,
   onSubmitRefinement,
-  isSubmitting = false
+  isSubmitting = false,
+  language = 'en-IN'
 }) {
   if (!parentSketch) return null;
 
@@ -18,6 +20,55 @@ export default function RefinementDrawer({
   const [facialHair, setFacialHair] = useState(parentSketch.features?.facialHair || '3-Day Heavy Stubble');
   const [marks, setMarks] = useState(parentSketch.features?.marks || 'Scar on Left Eyebrow');
   const [additionalNote, setAdditionalNote] = useState('');
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [recognitionController, setRecognitionController] = useState(null);
+  const sttSupported = isSpeechRecognitionSupported();
+
+  // Reset or abort recognition when modal closes or parentSketch changes
+  useEffect(() => {
+    if (!isOpen && recognitionController) {
+      recognitionController.abort();
+      setIsRecording(false);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (parentSketch) {
+      setJawline(parentSketch.features?.jawline || 'Sharp Square');
+      setEyes(parentSketch.features?.eyes || 'Deep-set Almond');
+      setNose(parentSketch.features?.nose || 'Straight Narrow Bridge');
+      setFacialHair(parentSketch.features?.facialHair || '3-Day Heavy Stubble');
+      setMarks(parentSketch.features?.marks || 'Scar on Left Eyebrow');
+      setAdditionalNote('');
+      setIsRecording(false);
+    }
+  }, [parentSketch]);
+
+  const handleToggleVoice = () => {
+    if (isRecording) {
+      if (recognitionController) recognitionController.abort();
+      setIsRecording(false);
+      return;
+    }
+
+    setIsRecording(true);
+    const ctrl = startVoiceRecognition(
+      language || 'en-IN',
+      (transcribed) => {
+        setAdditionalNote((prev) => (prev ? `${prev} ${transcribed}` : transcribed));
+        setIsRecording(false);
+      },
+      (err) => {
+        console.warn('Voice recognition note:', err);
+        setIsRecording(false);
+      },
+      () => {
+        setIsRecording(false);
+      }
+    );
+    setRecognitionController(ctrl);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -151,18 +202,61 @@ export default function RefinementDrawer({
           </select>
         </div>
 
-        {/* Natural Language Freeform Adjustment */}
+        {/* Natural Language Freeform Adjustment with Verbal Voice Mic Option */}
         <div>
-          <label className="block text-[11px] font-medium text-slate-300 mb-1">
-            Witness Refinement Feedback
-          </label>
-          <textarea
-            rows={2}
-            value={additionalNote}
-            onChange={(e) => setAdditionalNote(e.target.value)}
-            placeholder="e.g. Eyebrows slightly thicker, jaw angle slightly wider, tired look under eyes..."
-            className="w-full bg-navy-950 border border-slate-700 rounded p-2 text-xs text-slate-100 resize-none"
-          />
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
+              <span>Witness Refinement Feedback</span>
+              <span className="text-[10px] text-slate-500 font-mono">(Type or speak)</span>
+            </label>
+
+            {/* Mic Toggle Button */}
+            <button
+              type="button"
+              onClick={handleToggleVoice}
+              disabled={!sttSupported}
+              className={`flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-medium transition-all ${
+                isRecording
+                  ? 'bg-rose-950/90 border-rose-500 text-rose-300 animate-pulse shadow-sm shadow-rose-500/20'
+                  : 'bg-navy-950 hover:bg-slate-800 border-slate-700 text-sky-400 hover:text-sky-300'
+              } disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer`}
+              title={sttSupported ? 'Click to verbally dictate witness feedback' : 'Voice input not supported in this browser'}
+            >
+              <Mic size={12} className={isRecording ? 'text-rose-400 animate-bounce' : 'text-sky-400'} />
+              <span>{isRecording ? 'Listening... (Speak now)' : 'Voice Input (STT)'}</span>
+            </button>
+          </div>
+
+          <div className="relative">
+            <textarea
+              rows={3}
+              value={additionalNote}
+              onChange={(e) => setAdditionalNote(e.target.value)}
+              placeholder="e.g. Eyebrows slightly thicker, jaw angle slightly wider, tired look under eyes, scar darker..."
+              className="w-full bg-navy-950 border border-slate-700 rounded p-2.5 pr-10 text-xs text-slate-100 resize-none focus:outline-none focus:border-sky-400 leading-relaxed font-sans"
+            />
+            {/* Embedded Mic Shortcut Button inside Textarea */}
+            <button
+              type="button"
+              onClick={handleToggleVoice}
+              disabled={!sttSupported}
+              className={`absolute right-2.5 top-2.5 p-1.5 rounded transition-all cursor-pointer ${
+                isRecording
+                  ? 'bg-rose-500 text-white animate-pulse shadow-md shadow-rose-500/30'
+                  : 'text-slate-400 hover:text-sky-400 hover:bg-slate-800'
+              } disabled:opacity-30`}
+              title={isRecording ? 'Click to stop listening' : 'Click to dictate feedback with microphone'}
+            >
+              <Mic size={14} />
+            </button>
+          </div>
+
+          {isRecording && (
+            <p className="text-[10px] text-rose-400 font-mono mt-1 flex items-center gap-1.5 animate-pulse">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+              Microphone listening for witness statement... Speak adjustments aloud.
+            </p>
+          )}
         </div>
 
         {/* Modal Actions */}

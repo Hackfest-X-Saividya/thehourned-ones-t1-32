@@ -2,6 +2,7 @@ import React from 'react';
 import Modal from '../common/Modal';
 import Badge from '../common/Badge';
 import { ArrowRightLeft, CheckCircle2, XCircle, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { getMugshotFallback } from '../../services/mockCriminalDb';
 
 export default function FeatureComparisonModal({
   isOpen,
@@ -72,7 +73,11 @@ export default function FeatureComparisonModal({
             <img
               src={suspectRecord.mugshotUrl}
               alt={suspectRecord.fullName}
-              className="w-full h-56 object-cover rounded-lg border border-slate-700"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = getMugshotFallback(suspectRecord.gender, suspectRecord.suspectId);
+              }}
+              className="w-full h-56 object-cover rounded-lg border border-slate-700 bg-navy-950"
             />
           </div>
         </div>

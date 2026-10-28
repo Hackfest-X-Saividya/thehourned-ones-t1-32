@@ -1,0 +1,490 @@
+openapi: 3.1.0
+info:
+  title: AI Crime Scene Sketch Generator API
+  version: 1.0.0
+  description: |
+    Forensic AI Crime Scene Sketch Generator API for police investigators and forensic artists.
+    Provides suspect portrait generation, region-specific mask inpainting, revision history tree,
+    private R2 image streaming, and immutable forensic audit logging.
+servers:
+  - url: http://localhost:8787
+    description: Local development (Wrangler)
+  - url: https://crime-sketch-api.workers.dev
+    description: Production Cloudflare Workers environment
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Bearer token or User ID token (e.g. `Bearer usr_investigator_1`)
+    HeaderUserId:
+      type: apiKey
+      in: header
+      name: x-user-id
+      description: User ID header for development / frontend integration
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+            - requestId
+          properties:
+            code:
+              type: string
+              example: BAD_REQUEST
+            message:
+              type: string
+              example: Invalid request payload
+            requestId:
+              type: string
+              example: req_84f913d80a91
+            details:
+              type: object
+
+    Case:
+      type: object
+      properties:
+        id:
+          type: string
+          example: case_a1b2c3d4e5f67890
+        caseNumber:
+          type: string
+          example: CR-2026-0042
+        title:
+          type: string
+          example: Downtown Jewelry Robbery Suspect
+        description:
+          type: string
+          example: Male, mid-30s, sharp jawline, hooded jacket
+        status:
+          type: string
+          enum: [open, active_investigation, cold_case, closed]
+        incidentDate:
+          type: string
+          format: date-time
+        assignedInvestigatorId:
+          type: string
+          example: usr_investigator_1
+        activeImageId:
+          type: string
+          nullable: true
+          example: img_f0e1d2c3b4a5
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ImageMetadata:
+      type: object
+      properties:
+        id:
+          type: string
+          example: img_1029384756ab
+        caseId:
+          type: string
+          example: case_a1b2c3d4e5f67890
+        generationId:
+          type: string
+          nullable: true
+          example: gen_9876543210fe
+        parentImageId:
+          type: string
+          nullable: true
+          example: img_000000000000
+        version:
+          type: integer
+          example: 2
+        isActive:
+          type: boolean
+          example: true
+        status:
+          type: string
+          enum: [candidate, accepted, superseded, restored, archived]
+          example: accepted
+        prompt:
+          type: string
+          example: Male suspect in his 40s with round jaw
+        editInstruction:
+          type: string
+          nullable: true
+          example: Make the jawline much sharper, more angular
+        facialRegions:
+          type: array
+          items:
+            type: string
+          example: [jawline, chin]
+        modelName:
+          type: string
+          example: "@cf/runwayml/stable-diffusion-v1-5-inpainting"
+        parameters:
+          type: object
+        r2Key:
+          type: string
+          example: cases/case_sample_001/images/img_1029384756ab.png
+        r2MaskKey:
+          type: string
+          nullable: true
+          example: cases/case_sample_001/masks/img_1029384756ab_mask.png
+        imageUrl:
+          type: string
+          example: /api/images/img_1029384756ab/file
+        maskUrl:
+          type: string
+          nullable: true
+          example: /api/images/img_1029384756ab/mask
+        fileSizeBytes:
+          type: integer
+          example: 24890
+        createdAt:
+          type: string
+          format: date-time
+
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          example: aud_9988776655aa
+        caseId:
+          type: string
+          nullable: true
+          example: case_sample_001
+        requestId:
+          type: string
+          example: req_84f913d80a91
+        userId:
+          type: string
+          example: usr_investigator_1
+        action:
+          type: string
+          enum:
+            - CASE_CREATE
+            - CASE_VIEW
+            - IMAGE_GENERATE
+            - IMAGE_SELECT
+            - IMAGE_EDIT
+            - IMAGE_RESTORE
+            - IMAGE_EXPORT
+            - UNAUTHORIZED_ACCESS
+            - AUDIT_VIEW
+        resourceType:
+          type: string
+          enum: [case, generation, image, audit]
+        resourceId:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [SUCCESS, FAILURE]
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+
+security:
+  - BearerAuth: []
+  - HeaderUserId: []
+
+paths:
+  /api/health:
+    get:
+      summary: Health & binding diagnostics
+      security: []
+      responses:
+        '200':
+          description: Service health status
+
+  /api/cases:
+    post:
+      summary: Create a forensic case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title:
+                  type: string
+                  example: Downtown Jewelry Robbery Suspect
+                caseNumber:
+                  type: string
+                  example: CR-2026-0849
+                description:
+                  type: string
+                  example: Witness description of robber
+                status:
+                  type: string
+                  enum: [open, active_investigation, cold_case, closed]
+                incidentDate:
+                  type: string
+      responses:
+        '201':
+          description: Case created successfully
+        '400':
+          description: Validation error
+
+    get:
+      summary: List cases accessible to the current investigator
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of accessible cases
+
+  /api/cases/{caseId}:
+    get:
+      summary: Fetch case details
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Case details
+        '403':
+          description: Unauthorized case access
+        '404':
+          description: Case not found
+
+  /api/cases/{caseId}/versions:
+    get:
+      summary: Retrieve all image revisions and version tree for a case
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Version lineage of sketches
+
+  /api/cases/{caseId}/audit:
+    get:
+      summary: Retrieve audit history for an authorized case
+      parameters:
+        - in: path
+          name: caseId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: action
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Case audit log entries
+
+  /api/generations:
+    post:
+      summary: Generate candidate sketches from witness prompt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [caseId, prompt]
+              properties:
+                caseId:
+                  type: string
+                prompt:
+                  type: string
+                  example: Adult male suspect, mid-30s, sharp jawline, hooded jacket
+                negativePrompt:
+                  type: string
+                modelName:
+                  type: string
+                  default: "@cf/stabilityai/stable-diffusion-xl-base-1.0"
+                numCandidates:
+                  type: integer
+                  minimum: 1
+                  maximum: 4
+                  default: 1
+                parameters:
+                  type: object
+      responses:
+        '201':
+          description: Generated candidate sketches stored in R2 and D1
+
+  /api/images/{imageId}:
+    get:
+      summary: Retrieve image metadata and its parent version
+      parameters:
+        - in: path
+          name: imageId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Image metadata and parent details
+
+  /api/images/{imageId}/file:
+    get:
+      summary: Stream authenticated private image binary from Cloudflare R2
+      parameters:
+        - in: path
+          name: imageId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Binary image data (image/png)
+        '403':
+          description: Unauthorized to access this case image
+
+  /api/images/{imageId}/mask:
+    get:
+      summary: Stream authenticated edit mask binary from Cloudflare R2
+      parameters:
+        - in: path
+          name: imageId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Binary mask data (image/png)
+
+  /api/images/{imageId}/edits:
+    post:
+      summary: Region-specific inpainting edit creating new revision
+      parameters:
+        - in: path
+          name: imageId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prompt, facialRegions, mask]
+              properties:
+                prompt:
+                  type: string
+                  example: Make the jawline much sharper, more angular
+                facialRegions:
+                  type: array
+                  items:
+                    type: string
+                  example: [jawline, chin]
+                mask:
+                  type: string
+                  description: Base64 data URI or raw base64 PNG mask
+                modelName:
+                  type: string
+                  default: "@cf/runwayml/stable-diffusion-v1-5-inpainting"
+                parameters:
+                  type: object
+      responses:
+        '201':
+          description: New revision created and composited through mask
+
+  /api/images/{imageId}/select:
+    post:
+      summary: Select a candidate image as the active accepted sketch
+      parameters:
+        - in: path
+          name: imageId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Selected candidate is now the active sketch
+
+  /api/images/{imageId}/restore:
+    post:
+      summary: Restore an earlier image version as the current sketch
+      parameters:
+        - in: path
+          name: imageId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Previous version restored and logged in audit trail
+
+  /api/images/{imageId}/compare/{otherImageId}:
+    get:
+      summary: Compare two sketch revisions side-by-side with differential analysis
+      parameters:
+        - in: path
+          name: imageId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: otherImageId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Comparison metadata and diff
+
+  /api/images/{imageId}/export:
+    post:
+      summary: Export sketch with tamper-evident audit logging
+      parameters:
+        - in: path
+          name: imageId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Export registered in audit trail with download URL
+
+  /api/audit:
+    get:
+      summary: System-wide audit logs (Admin and Lead Investigator only)
+      responses:
+        '200':
+          description: Global audit logs
+        '403':
+          description: Forbidden
+

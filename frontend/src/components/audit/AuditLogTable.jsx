@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSession } from '../../context/SessionContext';
+import { fetchAuditLogs } from '../../services/api';
 import BlockHashInspector from './BlockHashInspector';
 import {
   ChevronDown,
@@ -12,50 +13,89 @@ import {
   Lock,
   ChevronLeft,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  Database,
+  RefreshCw,
+  FileCode
 } from 'lucide-react';
 import Badge from '../common/Badge';
 
 export default function AuditLogTable() {
   const { auditLogs } = useSession();
 
+  const [activeLedgerType, setActiveLedgerType] = useState('d1'); // 'd1' | 'blockchain'
+  const [d1Logs, setD1Logs] = useState([]);
+  const [isLoadingD1, setIsLoadingD1] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAction, setSelectedAction] = useState('ALL');
   const [sortDirection, setSortDirection] = useState('desc'); // 'desc' = newest first
-  const [expandedBlockIndex, setExpandedBlockIndex] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
 
-  // Filter and sort logs
+  // Load real Cloudflare D1 audit records
+  const loadD1Audit = async () => {
+    setIsLoadingD1(true);
+    try {
+      const data = await fetchAuditLogs();
+      if (Array.isArray(data)) {
+        setD1Logs(data);
+      }
+    } catch (err) {
+      console.warn('Failed loading D1 audit records:', err);
+    } finally {
+      setIsLoadingD1(false);
+    }
+  };
+
+  useEffect(() => {
+    loadD1Audit();
+  }, []);
+
+  // Filter and sort logs depending on active tab
   const filteredLogs = useMemo(() => {
-    let logs = [...auditLogs];
+    let logs = activeLedgerType === 'd1' ? [...d1Logs] : [...auditLogs];
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      logs = logs.filter(
-        (l) =>
-          l.memberName.toLowerCase().includes(q) ||
-          l.memberId.toLowerCase().includes(q) ||
-          l.sessionId.toLowerCase().includes(q) ||
-          l.imageId.toLowerCase().includes(q) ||
-          l.action.toLowerCase().includes(q) ||
-          (l.metadata && l.metadata.toLowerCase().includes(q))
-      );
+      if (activeLedgerType === 'd1') {
+        logs = logs.filter(
+          (l) =>
+            (l.userEmail && l.userEmail.toLowerCase().includes(q)) ||
+            (l.userId && l.userId.toLowerCase().includes(q)) ||
+            (l.requestId && l.requestId.toLowerCase().includes(q)) ||
+            (l.action && l.action.toLowerCase().includes(q)) ||
+            (l.resourceId && l.resourceId.toLowerCase().includes(q))
+        );
+      } else {
+        logs = logs.filter(
+          (l) =>
+            l.memberName.toLowerCase().includes(q) ||
+            l.memberId.toLowerCase().includes(q) ||
+            l.sessionId.toLowerCase().includes(q) ||
+            l.imageId.toLowerCase().includes(q) ||
+            l.action.toLowerCase().includes(q) ||
+            (l.metadata && l.metadata.toLowerCase().includes(q))
+        );
+      }
     }
 
     if (selectedAction !== 'ALL') {
-      logs = logs.filter((l) => l.action.includes(selectedAction));
+      logs = logs.filter((l) => (l.action || '').includes(selectedAction));
     }
 
     logs.sort((a, b) => {
-      if (sortDirection === 'desc') {
-        return b.blockIndex - a.blockIndex;
+      if (activeLedgerType === 'd1') {
+        const timeA = new Date(a.timestamp || 0).getTime();
+        const timeB = new Date(b.timestamp || 0).getTime();
+        return sortDirection === 'desc' ? timeB - timeA : timeA - timeB;
       }
-      return a.blockIndex - b.blockIndex;
+      return sortDirection === 'desc' ? b.blockIndex - a.blockIndex : a.blockIndex - b.blockIndex;
     });
 
     return logs;
-  }, [auditLogs, searchQuery, selectedAction, sortDirection]);
+  }, [activeLedgerType, d1Logs, auditLogs, searchQuery, selectedAction, sortDirection]);
 
   // Pagination calculation
   const totalPages = Math.ceil(filteredLogs.length / pageSize) || 1;
@@ -64,15 +104,16 @@ export default function AuditLogTable() {
     return filteredLogs.slice(start, start + pageSize);
   }, [filteredLogs, currentPage, pageSize]);
 
-  const toggleExpand = (blockIndex) => {
-    setExpandedBlockIndex(expandedBlockIndex === blockIndex ? null : blockIndex);
+  const toggleExpand = (id) => {
+    setExpandedId(expandedId === id ? null : id);
   };
 
-  const getActionBadge = (action) => {
+  const getActionBadge = (action = '') => {
     if (action.includes('TAMPER')) return <Badge variant="danger">{action}</Badge>;
-    if (action.includes('FINALIZED')) return <Badge variant="success">FINALIZED</Badge>;
-    if (action.includes('GENERATED')) return <Badge variant="info">GENERATED</Badge>;
-    if (action.includes('REFINED')) return <Badge variant="cyan">REFINED</Badge>;
+    if (action.includes('FINALIZED') || action.includes('SELECT')) return <Badge variant="success">{action}</Badge>;
+    if (action.includes('GENERATE')) return <Badge variant="info">GENERATE</Badge>;
+    if (action.includes('EDIT') || action.includes('REFINED')) return <Badge variant="cyan">EDIT / INPAINT</Badge>;
+    if (action.includes('RESTORE')) return <Badge variant="purple">RESTORE</Badge>;
     if (action.includes('VERIFICATION') || action.includes('DB')) return <Badge variant="warning">DB QUERY</Badge>;
     if (action.includes('EXPORT')) return <Badge variant="neutral">EXPORT</Badge>;
     return <Badge variant="neutral">{action}</Badge>;
@@ -80,6 +121,61 @@ export default function AuditLogTable() {
 
   return (
     <div className="bg-navy-900 border border-slate-800 rounded-xl overflow-hidden space-y-4 p-4">
+      {/* Ledger Mode Switcher */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+        <div className="flex items-center gap-1.5 p-1 bg-navy-950 rounded-lg border border-slate-800">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveLedgerType('d1');
+              setCurrentPage(1);
+            }}
+            className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-2 transition-all ${
+              activeLedgerType === 'd1'
+                ? 'bg-sky-500 text-navy-950 shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Database size={13} />
+            <span>Cloudflare D1 Audit Records (Live DB)</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-navy-900/60 font-bold">
+              {d1Logs.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveLedgerType('blockchain');
+              setCurrentPage(1);
+            }}
+            className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-2 transition-all ${
+              activeLedgerType === 'blockchain'
+                ? 'bg-sky-500 text-navy-950 shadow'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Lock size={13} />
+            <span>Cryptographic SHA-256 Chain</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-navy-900/60 font-bold">
+              {auditLogs.length}
+            </span>
+          </button>
+        </div>
+
+        {activeLedgerType === 'd1' && (
+          <button
+            type="button"
+            onClick={loadD1Audit}
+            disabled={isLoadingD1}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-navy-950 border border-slate-700 text-xs text-sky-400 hover:text-sky-300 transition-colors"
+          >
+            <RefreshCw size={13} className={isLoadingD1 ? 'animate-spin' : ''} />
+            <span>Refresh D1 Records</span>
+          </button>
+        )}
+      </div>
+
       {/* Table Filter Controls */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
         {/* Search */}
@@ -92,7 +188,11 @@ export default function AuditLogTable() {
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder="Filter by officer, action, session..."
+            placeholder={
+              activeLedgerType === 'd1'
+                ? 'Filter by request ID, user, action...'
+                : 'Filter by officer, action, session...'
+            }
             className="w-full bg-navy-950 border border-slate-700 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-sky-400"
           />
         </div>
@@ -108,12 +208,12 @@ export default function AuditLogTable() {
             className="bg-navy-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-400"
           >
             <option value="ALL">All Forensic Actions</option>
-            <option value="SESSION">Session Initialization</option>
-            <option value="GENERATED">Node Generation</option>
-            <option value="REFINED">Composite Refinement</option>
-            <option value="FINALIZED">Finalized Image</option>
-            <option value="DB">Criminal DB Queries</option>
-            <option value="EXPORT">Dossier PDF Export</option>
+            <option value="GENERATE">Image Generation</option>
+            <option value="EDIT">Image Edit / Inpainting</option>
+            <option value="SELECT">Candidate Selection</option>
+            <option value="RESTORE">Version Restoration</option>
+            <option value="CASE">Case Operations</option>
+            <option value="AUDIT">Audit Inspection</option>
           </select>
 
           <button
@@ -132,30 +232,46 @@ export default function AuditLogTable() {
           <thead>
             <tr className="bg-navy-950/90 text-slate-400 uppercase font-mono text-[11px] border-b border-slate-800">
               <th className="py-3 px-3 w-10 text-center"></th>
-              <th className="py-3 px-3">Block #</th>
-              <th className="py-3 px-4">Member Identity</th>
-              <th className="py-3 px-4">Session / Case</th>
-              <th className="py-3 px-3">Image ID</th>
-              <th className="py-3 px-3">Action</th>
-              <th className="py-3 px-4">Timestamp</th>
-              <th className="py-3 px-4">Cryptographic Link</th>
+              {activeLedgerType === 'd1' ? (
+                <>
+                  <th className="py-3 px-3">Request ID</th>
+                  <th className="py-3 px-4">Officer Identity</th>
+                  <th className="py-3 px-3">Action</th>
+                  <th className="py-3 px-4">Resource Target</th>
+                  <th className="py-3 px-3">Status</th>
+                  <th className="py-3 px-4">Timestamp</th>
+                </>
+              ) : (
+                <>
+                  <th className="py-3 px-3">Block #</th>
+                  <th className="py-3 px-4">Member Identity</th>
+                  <th className="py-3 px-4">Session / Case</th>
+                  <th className="py-3 px-3">Image ID</th>
+                  <th className="py-3 px-3">Action</th>
+                  <th className="py-3 px-4">Timestamp</th>
+                  <th className="py-3 px-4">Cryptographic Link</th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/80">
             {paginatedLogs.length === 0 ? (
               <tr>
-                <td colSpan="8" className="py-8 text-center text-slate-500 font-mono">
-                  No audit log blocks match the selected query criteria.
+                <td colSpan={activeLedgerType === 'd1' ? 7 : 8} className="py-8 text-center text-slate-500 font-mono">
+                  {isLoadingD1
+                    ? 'Fetching audit trail from Cloudflare D1...'
+                    : 'No audit records match the selected query criteria.'}
                 </td>
               </tr>
             ) : (
               paginatedLogs.map((log) => {
-                const isExpanded = expandedBlockIndex === log.blockIndex;
+                const rowKey = activeLedgerType === 'd1' ? log.id || log.requestId : log.blockIndex;
+                const isExpanded = expandedId === rowKey;
 
                 return (
-                  <React.Fragment key={log.blockIndex}>
+                  <React.Fragment key={rowKey}>
                     <tr
-                      onClick={() => toggleExpand(log.blockIndex)}
+                      onClick={() => toggleExpand(rowKey)}
                       className={`cursor-pointer transition-colors ${
                         isExpanded ? 'bg-navy-950/80' : 'hover:bg-navy-950/50'
                       }`}
@@ -167,42 +283,87 @@ export default function AuditLogTable() {
                           <ChevronRight size={14} />
                         )}
                       </td>
-                      <td className="py-3 px-3 font-mono font-bold text-sky-400">
-                        #{log.blockIndex}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="font-semibold text-slate-200">{log.memberName}</div>
-                        <div className="text-[10px] text-slate-500 font-mono">{log.memberId}</div>
-                      </td>
-                      <td className="py-3 px-4 font-mono text-slate-300">
-                        <div>{log.sessionId}</div>
-                        <div className="text-[10px] text-slate-500">{log.caseNumber}</div>
-                      </td>
-                      <td className="py-3 px-3 font-mono text-amber-300">
-                        {log.imageId || 'N/A'}
-                      </td>
-                      <td className="py-3 px-3">{getActionBadge(log.action)}</td>
-                      <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
-                        <div>{new Date(log.timestamp).toLocaleDateString()}</div>
-                        <div className="text-slate-500">
-                          {new Date(log.timestamp).toLocaleTimeString()}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 font-mono text-[10px]">
-                        <div className="text-slate-500">
-                          Prev: {log.prevHash ? `${log.prevHash.slice(0, 10)}...` : '0000...'}
-                        </div>
-                        <div className="text-emerald-400 font-bold">
-                          Curr: {log.currHash ? `${log.currHash.slice(0, 10)}...` : 'computing...'}
-                        </div>
-                      </td>
+
+                      {activeLedgerType === 'd1' ? (
+                        <>
+                          <td className="py-3 px-3 font-mono font-bold text-sky-400">
+                            {log.requestId}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="font-semibold text-slate-200">{log.userEmail || log.userId}</div>
+                            <div className="text-[10px] text-slate-500 font-mono uppercase">{log.userRole || 'officer'}</div>
+                          </td>
+                          <td className="py-3 px-3">{getActionBadge(log.action)}</td>
+                          <td className="py-3 px-4 font-mono text-slate-300">
+                            <div className="text-amber-300 font-bold">{log.resourceId || 'N/A'}</div>
+                            <div className="text-[10px] text-slate-500 uppercase">{log.resourceType}</div>
+                          </td>
+                          <td className="py-3 px-3">
+                            <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-1.5 py-0.5 rounded">
+                              {log.status || 'SUCCESS'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
+                            <div>{new Date(log.timestamp).toLocaleDateString()}</div>
+                            <div className="text-slate-500">
+                              {new Date(log.timestamp).toLocaleTimeString()}
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="py-3 px-3 font-mono font-bold text-sky-400">
+                            #{log.blockIndex}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="font-semibold text-slate-200">{log.memberName}</div>
+                            <div className="text-[10px] text-slate-500 font-mono">{log.memberId}</div>
+                          </td>
+                          <td className="py-3 px-4 font-mono text-slate-300">
+                            <div>{log.sessionId}</div>
+                            <div className="text-[10px] text-slate-500">{log.caseNumber}</div>
+                          </td>
+                          <td className="py-3 px-3 font-mono text-amber-300">
+                            {log.imageId || 'N/A'}
+                          </td>
+                          <td className="py-3 px-3">{getActionBadge(log.action)}</td>
+                          <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
+                            <div>{new Date(log.timestamp).toLocaleDateString()}</div>
+                            <div className="text-slate-500">
+                              {new Date(log.timestamp).toLocaleTimeString()}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 font-mono text-[10px]">
+                            <div className="text-slate-500">
+                              Prev: {log.prevHash ? `${log.prevHash.slice(0, 10)}...` : '0000...'}
+                            </div>
+                            <div className="text-emerald-400 font-bold">
+                              Curr: {log.currHash ? `${log.currHash.slice(0, 10)}...` : 'computing...'}
+                            </div>
+                          </td>
+                        </>
+                      )}
                     </tr>
 
                     {/* Expandable Inspection Details */}
                     {isExpanded && (
                       <tr>
-                        <td colSpan="8" className="p-0 bg-navy-950">
-                          <BlockHashInspector log={log} />
+                        <td colSpan={activeLedgerType === 'd1' ? 7 : 8} className="p-0 bg-navy-950">
+                          {activeLedgerType === 'd1' ? (
+                            <div className="p-4 border-t border-slate-800 space-y-2 bg-navy-950/90 text-xs font-mono">
+                              <div className="flex items-center justify-between text-slate-400">
+                                <span className="font-bold text-sky-400 flex items-center gap-1.5">
+                                  <FileCode size={13} /> D1 Audit Payload Details ({log.id})
+                                </span>
+                                <span className="text-slate-500">Case ID: {log.caseId}</span>
+                              </div>
+                              <pre className="p-3 bg-navy-900 border border-slate-800 rounded-lg text-slate-300 text-[11px] overflow-x-auto leading-relaxed">
+                                {JSON.stringify(log.details || log, null, 2)}
+                              </pre>
+                            </div>
+                          ) : (
+                            <BlockHashInspector log={log} />
+                          )}
                         </td>
                       </tr>
                     )}

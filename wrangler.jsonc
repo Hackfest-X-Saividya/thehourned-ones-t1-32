@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ai-crime-scene-sketch-backend",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "crime-sketch-db",
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "crime-scene-sketches"
+    }
+  ],
+  // Workers AI binding (enable when deploying with Cloudflare API token or account credentials)
+  // "ai": {
+  //   "binding": "AI"
+  // },
+  "vars": {
+    "ENVIRONMENT": "development",
+    "MOCK_AI": "true",
+    "JWT_SECRET": "crime-sketch-forensic-secret-key-2026",
+    "MAX_FILE_SIZE_BYTES": "10485760",
+    "DEFAULT_IMAGE_WIDTH": "1024",
+    "DEFAULT_IMAGE_HEIGHT": "1024"
+  }
+}
+
