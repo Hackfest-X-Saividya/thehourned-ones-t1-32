@@ -10,6 +10,7 @@ import {
   Sparkles,
   AlertTriangle
 } from 'lucide-react';
+import { createMockCandidatePreview } from '../../services/api';
 
 export default function CandidateSketchNode({ data }) {
   const {
@@ -80,9 +81,12 @@ export default function CandidateSketchNode({ data }) {
       {/* Sketch Image Display */}
       <div className="relative group bg-navy-950">
         <img
-          src={sketch.imageUrl}
+          src={sketch.imageUrl || createMockCandidatePreview(sketch.imageType || 'sketch', sketch.seed || 1042, sketch.label || 'Candidate')}
           alt={`Forensic Sketch ${sketch.imageId}`}
           className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+          onError={(e) => {
+            e.currentTarget.src = createMockCandidatePreview(sketch.imageType || 'sketch', sketch.seed || 1042, sketch.label || 'Candidate');
+          }}
         />
         <div className="absolute bottom-2 left-2 right-2 bg-navy-950/90 backdrop-blur-sm px-2 py-1 rounded border border-slate-800/80 flex items-center justify-between text-[10px] font-mono text-slate-300">
           <span>{sketch.parentId ? `Parent: ${sketch.parentId}` : 'Stage 1 Candidate'}</span>

@@ -12,7 +12,7 @@ import VersionComparisonModal from '../components/studio/VersionComparisonModal'
 import SessionGalleryDrawer from '../components/studio/SessionGalleryDrawer';
 import PdfExportModal from '../components/studio/PdfExportModal';
 import { useSession } from '../context/SessionContext';
-import { generateCandidates, generateSketch, refineSketch, extractFeatures } from '../services/api';
+import { generateCandidates, generateSketch, refineSketch, extractFeatures, createMockCandidatePreview } from '../services/api';
 import { detectFacialLandmarks, generateFacialRegionMask } from '../utils/maskGenerator';
 import {
   Sparkles,
@@ -861,9 +861,12 @@ export default function ImageGenStudioPage() {
                     {/* Image Preview with Dynamic Facial Landmark Overlays */}
                     <div className="relative aspect-[4/5] max-h-56 bg-navy-950 rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center">
                       <img
-                        src={finalizedSketch.imageUrl}
+                        src={finalizedSketch.imageUrl || createMockCandidatePreview(finalizedSketch.imageType || 'sketch', finalizedSketch.seed || 1042)}
                         alt={finalizedSketch.imageId}
                         className="w-full h-full object-contain"
+                        onError={(e) => {
+                          e.currentTarget.src = createMockCandidatePreview(finalizedSketch.imageType || 'sketch', finalizedSketch.seed || 1042);
+                        }}
                       />
 
                       {/* Real-time Inpainting Mask Overlay */}

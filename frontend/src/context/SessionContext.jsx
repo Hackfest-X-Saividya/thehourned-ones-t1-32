@@ -1,12 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { generateBlockHash, calculateSha256 } from '../utils/hashUtils';
-import { selectCandidateImage, fetchSavedCandidateSelection } from '../services/api';
+import { selectCandidateImage, fetchSavedCandidateSelection, createMockCandidatePreview } from '../services/api';
 
 const SessionContext = createContext();
 
+const INITIAL_PREVIEW = createMockCandidatePreview('sketch', 1042, 'Candidate A');
+
 const INITIAL_SKETCH = {
   imageId: 'IMG-SKETCH-1042',
-  imageUrl: '/api/images/IMG-SKETCH-1042/file',
+  imageUrl: INITIAL_PREVIEW,
+  previewDataUri: INITIAL_PREVIEW,
+  isMock: true,
+  dataSource: 'mock_fallback',
+  provenanceLabel: 'INITIAL TEMPLATE COMPOSITE',
   prompt: 'Male, early 30s, sharp square jawline, deep-set almond eyes, straight narrow nose, 3-day stubble, vertical scar above left eyebrow',
   seed: 1042,
   iteration: 1,
@@ -14,7 +20,7 @@ const INITIAL_SKETCH = {
   createdAt: '2026-10-28T09:30:00.000Z',
   imageHash: '8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4',
   confidenceScore: 94.2,
-  changeDescription: 'Initial witness testimony composite generated via forensic multimodal pipeline',
+  changeDescription: 'Initial witness testimony composite template',
   features: {
     faceShape: 'Angular Oval',
     jawline: 'Sharp Square',

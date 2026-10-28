@@ -3,6 +3,8 @@ import { useSession } from '../../context/SessionContext';
 import { Shield, FileText, CheckCircle2, UserCheck, AlertCircle } from 'lucide-react';
 import Badge from '../common/Badge';
 
+import { createMockCandidatePreview } from '../../services/api';
+
 export default function SessionBanner() {
   const { sessionId, caseNumber, caseInfo, finalizedSketch } = useSession();
 
@@ -36,9 +38,12 @@ export default function SessionBanner() {
           {finalizedSketch ? (
             <div className="flex items-center gap-2 bg-navy-950/80 border border-slate-800 rounded px-2.5 py-1">
               <img
-                src={finalizedSketch.imageUrl}
+                src={finalizedSketch.imageUrl || createMockCandidatePreview('sketch', finalizedSketch.seed || 1042)}
                 alt="Active Target Composite"
                 className="w-5 h-5 rounded-full object-cover border border-sky-500/50"
+                onError={(e) => {
+                  e.currentTarget.src = createMockCandidatePreview('sketch', finalizedSketch.seed || 1042);
+                }}
               />
               <span className="text-[11px] text-slate-300 font-mono">
                 Locked: <span className="text-sky-300 font-semibold">{finalizedSketch.imageId}</span> (v{finalizedSketch.iteration})
