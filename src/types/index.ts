@@ -115,6 +115,10 @@ export interface Env {
   JWT_SECRET?: string;
   EXTERNAL_AI_API_KEY?: string;
   EXTERNAL_AI_URL?: string;
+  EXTERNAL_WORKER_URL?: string;
+  EXTERNAL_WORKER_TOKEN?: string;
+  CLOUDFLARE_WORKER_URL?: string;
+  CLOUDFLARE_WORKER_TOKEN?: string;
   MAX_FILE_SIZE_BYTES?: string;
   DEFAULT_IMAGE_WIDTH?: string;
   DEFAULT_IMAGE_HEIGHT?: string;

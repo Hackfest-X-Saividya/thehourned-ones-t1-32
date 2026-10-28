@@ -282,6 +282,44 @@ forensicsRouter.post('/generate-candidates', async (c) => {
   const numCandidates = Math.min(Math.max(Number(body.numCandidates) || 4, 1), 4);
   const caseId = body.caseId || 'case_sample_001';
 
+  // If upstream Cloudflare Worker URL is configured, forward candidate generation to it
+  const remoteWorkerUrl = c.env.EXTERNAL_WORKER_URL || c.env.CLOUDFLARE_WORKER_URL || c.env.EXTERNAL_AI_URL;
+  const rawToken = c.env.EXTERNAL_WORKER_TOKEN || c.env.CLOUDFLARE_WORKER_TOKEN || '';
+  if (remoteWorkerUrl && rawToken) {
+    try {
+      const authHeader = rawToken.startsWith('Bearer ') ? rawToken : `Bearer ${rawToken}`;
+
+      // Per handoff doc: proxies to live worker with only { prompt, imageType }
+      const remoteRes = await fetch(`${remoteWorkerUrl.replace(/\/$/, '')}/api/generate-candidates`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader
+        },
+        body: JSON.stringify({ prompt, imageType }),
+        redirect: 'follow'
+      });
+
+      if (remoteRes.ok) {
+        const remoteData = await remoteRes.json() as any;
+        return c.json(remoteData, 201);
+      } else {
+        console.warn(`[forensicsRouter] Remote Cloudflare Worker returned status ${remoteRes.status}`);
+        return c.json({
+          error: 'EXTERNAL_WORKER_UNAVAILABLE',
+          status: remoteRes.status,
+          message: `Remote worker returned ${remoteRes.status}`
+        }, 502);
+      }
+    } catch (err: any) {
+      console.warn('[forensicsRouter] Remote Cloudflare Worker unreachable:', err.message);
+      return c.json({
+        error: 'EXTERNAL_WORKER_UNAVAILABLE',
+        message: err.message
+      }, 502);
+    }
+  }
+
   const user = c.get('user') || {
     id: 'usr_investigator_1',
     name: 'Detective Sarah Connor',

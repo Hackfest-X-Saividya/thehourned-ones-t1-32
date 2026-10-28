@@ -8,7 +8,8 @@ import {
   ShieldCheck,
   ExternalLink,
   Sparkles,
-  AlertTriangle
+  AlertTriangle,
+  X
 } from 'lucide-react';
 import { createMockCandidatePreview } from '../../services/api';
 
@@ -19,7 +20,8 @@ export default function CandidateSketchNode({ data }) {
     onFinalize,
     onRefine,
     onCompare,
-    onDownloadPng
+    onDownloadPng,
+    onRemoveNode
   } = data;
 
   if (!sketch) return null;
@@ -74,6 +76,21 @@ export default function CandidateSketchNode({ data }) {
             <span className="text-[10px] font-mono font-bold text-emerald-300 flex items-center gap-1 bg-emerald-900/90 border border-emerald-500 px-1.5 py-0.5 rounded shadow">
               <CheckCircle2 size={11} className="stroke-[2.5]" /> SELECTED
             </span>
+          )}
+
+          {/* Remove / Dismiss Candidate Node Cross Button */}
+          {onRemoveNode && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemoveNode(sketch.imageId);
+              }}
+              title="Remove this node from workspace"
+              className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-950/70 rounded border border-transparent hover:border-rose-500/50 transition-colors ml-0.5 cursor-pointer"
+            >
+              <X size={12} className="stroke-[2.5]" />
+            </button>
           )}
         </div>
       </div>

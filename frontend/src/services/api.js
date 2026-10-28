@@ -8,7 +8,7 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK_DATA === 'true';
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 15000,
+  timeout: 90000, // 90 seconds to allow remote Workers AI multi-candidate diffusion to complete
   headers: {
     'Content-Type': 'application/json',
     'X-Client-Agent': 'Chitragupta-Forensic-Frontend/2.0',
@@ -128,11 +128,45 @@ export async function extractFeatures({ prompt, language = 'en-IN' }) {
 }
 
 /**
+ * Helper to wrap candidates array with caseId and source metadata
+ * while maintaining array-like iterability and indexed access.
+ */
+function wrapCandidatesResult({ caseId, candidates, source }) {
+  const result = {
+    caseId,
+    candidates,
+    source
+  };
+
+  Object.defineProperty(result, Symbol.iterator, {
+    enumerable: false,
+    value: function* () {
+      yield* candidates;
+    }
+  });
+
+  Object.defineProperty(result, 'length', {
+    enumerable: false,
+    get: () => candidates.length
+  });
+
+  for (let i = 0; i < candidates.length; i++) {
+    result[i] = candidates[i];
+  }
+
+  ['map', 'filter', 'some', 'find', 'forEach', 'reduce', 'slice', 'indexOf'].forEach((fn) => {
+    result[fn] = (...args) => candidates[fn](...args);
+  });
+
+  return result;
+}
+
+/**
  * Generates multiple candidate forensic sketches.
  * Transparently supports:
- * 1. Deployed Cloudflare Worker: POST /api/generate-candidates ({ prompt, imageType })
- * 2. Local Repository Backend: POST /api/generations ({ caseId, prompt, numCandidates, ... })
- * 3. Offline Mock Generator (Crisp SVG Preview Data URIs)
+ * 1. Deployed Cloudflare Worker: POST /api/generate-candidates ({ prompt, imageType }) -> { caseId, candidates, source: 'worker_ai' }
+ * 2. Local Repository Backend: POST /api/generations ({ caseId, prompt, numCandidates, ... }) -> { caseId, candidates, source: 'backend_ai' }
+ * 3. Offline Mock Generator (Crisp SVG Preview Data URIs) -> { caseId, candidates, source: 'mock_fallback' }
  */
 export async function generateCandidates({
   prompt,
@@ -152,13 +186,22 @@ export async function generateCandidates({
   if (!USE_MOCK) {
     // Strategy A: Try separate deployed Cloudflare Worker endpoint (POST /api/generate-candidates)
     try {
-      const response = await apiClient.post('/generate-candidates', {
-        prompt,
-        imageType
-      });
+      const response = await apiClient.post(
+        '/generate-candidates',
+        {
+          prompt,
+          imageType
+        },
+        { timeout: 120000 }
+      );
 
       if (response.data?.candidates && Array.isArray(response.data.candidates) && response.data.candidates.length > 0) {
         const received = response.data.candidates;
+        const actualCaseId = response.data.caseId || caseId;
+        try {
+          localStorage.setItem('forensic_active_case_id', actualCaseId);
+        } catch {}
+
         for (let i = 0; i < received.length; i++) {
           const cand = received[i];
           const candSeed = chosenSeed + i * 179;
@@ -166,11 +209,12 @@ export async function generateCandidates({
 
           candidates.push({
             imageId: cand.id,
+            caseId: actualCaseId,
             imageUrl: cand.previewDataUri || cand.imageUrl || createMockCandidatePreview(imageType, candSeed, cand.label || `Candidate ${String.fromCharCode(65 + i)}`),
             previewDataUri: cand.previewDataUri || null,
             label: cand.label || `Candidate ${String.fromCharCode(65 + i)}`,
             imageType: cand.imageType || imageType,
-            model: cand.model || (imageType === 'sketch' ? '@cf/stabilityai/stable-diffusion-xl-base-1.0 (Pencil)' : '@cf/bytedance/stable-diffusion-xl-lightning (Portrait)'),
+            model: cand.model || (imageType === 'sketch' ? '@cf/black-forest-labs/flux-1-schnell' : '@cf/bytedance/stable-diffusion-xl-lightning'),
             prompt,
             seed: candSeed,
             iteration,
@@ -187,16 +231,18 @@ export async function generateCandidates({
               : `Candidate ${String.fromCharCode(65 + i)} (${imageType === 'sketch' ? 'Pencil Sketch' : 'Realistic Portrait'})`
           });
         }
-        return candidates;
+        return wrapCandidatesResult({ caseId: actualCaseId, candidates, source: 'worker_ai' });
       }
     } catch (err) {
-      // Endpoint not found or different schema, try Strategy B
+      // Endpoint unreachable or returned 502, try Strategy B
+      console.warn('[API] /generate-candidates failed or offline, trying Strategy B (/generations):', err.message);
     }
 
     // Strategy B: Try repository backend endpoint (POST /api/generations)
     try {
+      const backendCaseId = (caseId && !caseId.startsWith('FIR-')) ? caseId : 'case_sample_001';
       const response = await apiClient.post('/generations', {
-        caseId,
+        caseId: backendCaseId,
         prompt,
         numCandidates: count,
         modelName: imageType === 'sketch'
@@ -210,6 +256,11 @@ export async function generateCandidates({
 
       if (response.data?.status === 'success' && response.data.data?.candidates?.length > 0) {
         const backendCandidates = response.data.data.candidates;
+        const actualCaseId = response.data.data.caseId || caseId;
+        try {
+          localStorage.setItem('forensic_active_case_id', actualCaseId);
+        } catch {}
+
         for (let i = 0; i < backendCandidates.length; i++) {
           const cand = backendCandidates[i];
           const candSeed = cand.parameters?.seed || chosenSeed + i * 137;
@@ -217,6 +268,7 @@ export async function generateCandidates({
 
           candidates.push({
             imageId: cand.id,
+            caseId: actualCaseId,
             imageUrl: cand.imageUrl || cand.previewDataUri,
             previewDataUri: cand.previewDataUri || null,
             label: `Candidate ${String.fromCharCode(65 + i)}`,
@@ -238,7 +290,7 @@ export async function generateCandidates({
               : `Candidate Variation #${i + 1} (${imageType === 'sketch' ? 'Pencil Sketch' : 'Realistic Portrait'})`
           });
         }
-        return candidates;
+        return wrapCandidatesResult({ caseId: actualCaseId, candidates, source: 'backend_ai' });
       }
     } catch (err) {
       console.warn('[API] Backend generations unreachable, activating offline mock fallback:', err.message);
@@ -258,6 +310,7 @@ export async function generateCandidates({
 
     candidates.push({
       imageId: fallbackImageId,
+      caseId,
       imageUrl: previewDataUri,
       previewDataUri,
       label: `Candidate ${letter}`,
@@ -281,14 +334,15 @@ export async function generateCandidates({
     });
   }
 
-  return candidates;
+  return wrapCandidatesResult({ caseId, candidates, source: 'mock_fallback' });
 }
 
 /**
  * Backward compatibility wrapper for single sketch generation.
  */
 export async function generateSketch(params) {
-  const candidates = await generateCandidates({ ...params, numCandidates: 1 });
+  const result = await generateCandidates({ ...params, numCandidates: 1 });
+  const candidates = result.candidates || (Array.isArray(result) ? result : []);
   return candidates[0];
 }
 
@@ -299,40 +353,65 @@ export async function generateSketch(params) {
  * 2. POST /api/images/:imageId/select ({ isSelected: true })
  * 3. localStorage persistence fallback
  */
-export async function selectCandidateImage({ caseId = 'case_sample_001', imageId }) {
+export async function selectCandidateImage({ caseId, imageId, isMock = false }) {
   if (!imageId) return null;
+  const activeCaseId = caseId || localStorage.getItem('forensic_active_case_id') || 'case_sample_001';
 
-  // Persist locally immediately to protect against page refreshes
+  // Persist locally immediately to protect against page refreshes (Rule 7 cache)
   try {
-    localStorage.setItem(`forensic_selection_${caseId}`, imageId);
-    sessionStorage.setItem(`forensic_selection_${caseId}`, imageId);
+    localStorage.setItem(`forensic_selection_${activeCaseId}`, imageId);
+    sessionStorage.setItem(`forensic_selection_${activeCaseId}`, imageId);
   } catch (e) {
     // Ignore storage quota
+  }
+
+  // Rule 8: Never select a mock/local image through the live Worker; local IDs and remote IDs belong to separate data stores.
+  if (isMock || imageId.startsWith('IMG-MOCK-')) {
+    return {
+      ok: true,
+      caseId: activeCaseId,
+      selected: true,
+      selectedImageId: imageId,
+      selection: {
+        case_id: activeCaseId,
+        selected_image_id: imageId,
+        selected_at: new Date().toISOString()
+      },
+      status: 'success',
+      isMock: true,
+      persisted: false,
+      persistence: 'local_storage_mock'
+    };
   }
 
   if (!USE_MOCK) {
     // Try POST /api/cases/:caseId/select-image
     try {
-      const response = await apiClient.post(`/cases/${caseId}/select-image`, { imageId });
+      const response = await apiClient.post(`/cases/${activeCaseId}/select-image`, { imageId });
       if (response.data) {
         const d = response.data;
+        // Rule 6: Parse returned selection ID in this order:
+        // selection.selected_image_id, selected_image_id, selectedImageId, data.activeImageId
         const selectedId =
           d?.selection?.selected_image_id ||
           d?.selected_image_id ||
           d?.selectedImageId ||
           d?.data?.selectedImageId ||
+          d?.data?.activeImageId ||
           imageId;
 
         return {
           ok: d.ok ?? true,
-          caseId: d.caseId || caseId,
+          caseId: d.caseId || activeCaseId,
           selected: d.selected ?? true,
           selectedImageId: selectedId,
           selection: d.selection || {
-            case_id: caseId,
+            case_id: d.caseId || activeCaseId,
             selected_image_id: selectedId,
             selected_at: new Date().toISOString()
           },
+          persisted: d.persisted,
+          persistence: d.persistence,
           status: 'success'
         };
       }
@@ -343,11 +422,11 @@ export async function selectCandidateImage({ caseId = 'case_sample_001', imageId
         if (response2.data) {
           return {
             ok: true,
-            caseId,
+            caseId: activeCaseId,
             selected: true,
             selectedImageId: imageId,
             selection: {
-              case_id: caseId,
+              case_id: activeCaseId,
               selected_image_id: imageId,
               selected_at: new Date().toISOString()
             },
@@ -355,7 +434,7 @@ export async function selectCandidateImage({ caseId = 'case_sample_001', imageId
           };
         }
       } catch (err2) {
-        console.warn('[API] Backend selection sync failed, preserved in local storage:', err2.message);
+        console.warn('[API] Backend selection sync failed, preserved in local storage cache:', err2.message);
       }
     }
   }
@@ -363,11 +442,11 @@ export async function selectCandidateImage({ caseId = 'case_sample_001', imageId
   return {
     ok: true,
     status: 'success',
-    caseId,
+    caseId: activeCaseId,
     selected: true,
     selectedImageId: imageId,
     selection: {
-      case_id: caseId,
+      case_id: activeCaseId,
       selected_image_id: imageId,
       selected_at: new Date().toISOString()
     },
@@ -380,13 +459,16 @@ export async function selectCandidateImage({ caseId = 'case_sample_001', imageId
  * Handles:
  * 1. GET /api/cases/:caseId/selection -> { ok, caseId, selected, selection: { selected_image_id } }
  * 2. GET /api/cases/:caseId -> { data: { activeImageId } }
- * 3. localStorage fallback
+ * 3. localStorage cache fallback (never proof of backend persistence)
  */
-export async function fetchSavedCandidateSelection({ caseId = 'case_sample_001' }) {
+export async function fetchSavedCandidateSelection({ caseId }) {
+  const activeCaseId = caseId || localStorage.getItem('forensic_active_case_id') || 'case_sample_001';
+
   if (!USE_MOCK) {
     try {
-      const response = await apiClient.get(`/cases/${caseId}/selection`);
+      const response = await apiClient.get(`/cases/${activeCaseId}/selection`);
       const d = response.data;
+      // Rule 6 order: selection.selected_image_id, selected_image_id, selectedImageId, data.activeImageId
       const foundId =
         d?.selection?.selected_image_id ||
         d?.selected_image_id ||
@@ -399,7 +481,7 @@ export async function fetchSavedCandidateSelection({ caseId = 'case_sample_001' 
       }
     } catch (err) {
       try {
-        const response2 = await apiClient.get(`/cases/${caseId}`);
+        const response2 = await apiClient.get(`/cases/${activeCaseId}`);
         const d2 = response2.data;
         const foundId2 =
           d2?.selection?.selected_image_id ||
@@ -411,12 +493,13 @@ export async function fetchSavedCandidateSelection({ caseId = 'case_sample_001' 
           return foundId2;
         }
       } catch (err2) {
-        // Fallback to local storage
+        // Fallback to local storage cache
       }
     }
   }
 
-  return localStorage.getItem(`forensic_selection_${caseId}`) || sessionStorage.getItem(`forensic_selection_${caseId}`) || null;
+  // localStorage is only a UI cache, never proof the backend saved the selection (Rule 7)
+  return localStorage.getItem(`forensic_selection_${activeCaseId}`) || sessionStorage.getItem(`forensic_selection_${activeCaseId}`) || null;
 }
 
 /**

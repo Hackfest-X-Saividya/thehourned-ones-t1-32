@@ -82,8 +82,9 @@ function buildGraphFromSession(images, activeFinalized, handlers, promptState) {
     }
   ];
 
-  // Process images in chronological order (oldest to newest)
-  const chronological = [...images].reverse();
+  // Process images in chronological order (oldest to newest, excluding legacy dummy sketch)
+  const cleanImages = images.filter((s) => s.imageId && s.imageId !== 'IMG-SKETCH-1042');
+  const chronological = [...cleanImages].reverse();
   const positionMap = new Map();
   let rootIndex = 0;
 
@@ -112,7 +113,8 @@ function buildGraphFromSession(images, activeFinalized, handlers, promptState) {
         onFinalize: handlers.handleFinalizeSketch,
         onRefine: handlers.handleOpenRefine,
         onCompare: handlers.handleOpenCompare,
-        onDownloadPng: handlers.handleDownloadPng
+        onDownloadPng: handlers.handleDownloadPng,
+        onRemoveNode: handlers.handleRemoveNode
       }
     });
 
@@ -146,7 +148,14 @@ function buildGraphFromSession(images, activeFinalized, handlers, promptState) {
  * Re-hydrates existing canvas nodes with active closures and ensures no sketches are missing
  */
 function rehydrateExistingGraph(existingNodes, existingEdges, images, activeFinalized, handlers, promptState) {
-  const updatedNodes = existingNodes.map((n) => {
+  const cleanExistingNodes = existingNodes.filter(
+    (n) => n.id !== 'node-sketch-IMG-SKETCH-1042' && n.data?.sketch?.imageId !== 'IMG-SKETCH-1042'
+  );
+  const cleanExistingEdges = existingEdges.filter(
+    (e) => !e.id?.includes('IMG-SKETCH-1042') && e.source !== 'node-sketch-IMG-SKETCH-1042' && e.target !== 'node-sketch-IMG-SKETCH-1042'
+  );
+
+  const updatedNodes = cleanExistingNodes.map((n) => {
     if (n.type === 'candidateSketchNode') {
       const sketch = n.data?.sketch;
       return {
@@ -157,7 +166,8 @@ function rehydrateExistingGraph(existingNodes, existingEdges, images, activeFina
           onFinalize: handlers.handleFinalizeSketch,
           onRefine: handlers.handleOpenRefine,
           onCompare: handlers.handleOpenCompare,
-          onDownloadPng: handlers.handleDownloadPng
+          onDownloadPng: handlers.handleDownloadPng,
+          onRemoveNode: handlers.handleRemoveNode
         }
       };
     }
@@ -191,16 +201,17 @@ function rehydrateExistingGraph(existingNodes, existingEdges, images, activeFina
     return n;
   });
 
-  const updatedEdges = [...existingEdges];
+  const updatedEdges = [...cleanExistingEdges];
 
-  // Reconcile: Ensure any sketch in sessionImages is represented on canvas
+  // Reconcile: Ensure any sketch in sessionImages (excluding dummy) is represented on canvas
   const existingSketchIds = new Set(
     updatedNodes
       .filter((n) => n.type === 'candidateSketchNode')
       .map((n) => n.data?.sketch?.imageId)
   );
 
-  images.forEach((sketch) => {
+  const cleanImages = images.filter((s) => s.imageId && s.imageId !== 'IMG-SKETCH-1042');
+  cleanImages.forEach((sketch) => {
     if (!existingSketchIds.has(sketch.imageId)) {
       const parentNode = updatedNodes.find((n) => n.data?.sketch?.imageId === sketch.parentId);
       const parentPos = parentNode ? parentNode.position : { x: 780, y: 80 };
@@ -226,7 +237,8 @@ function rehydrateExistingGraph(existingNodes, existingEdges, images, activeFina
           onFinalize: handlers.handleFinalizeSketch,
           onRefine: handlers.handleOpenRefine,
           onCompare: handlers.handleOpenCompare,
-          onDownloadPng: handlers.handleDownloadPng
+          onDownloadPng: handlers.handleDownloadPng,
+          onRemoveNode: handlers.handleRemoveNode
         }
       });
 
@@ -263,9 +275,12 @@ export default function ImageGenStudioPage() {
     officer,
     sessionId,
     caseNumber,
+    activeCaseId,
+    setActiveCaseId,
     sessionImages,
     addSessionSketch,
     addSessionSketches,
+    removeSessionSketch,
     finalizedSketch,
     finalizeSketch,
     recordAuditAction,
@@ -411,6 +426,35 @@ export default function ImageGenStudioPage() {
     [recordAuditAction, addToast]
   );
 
+  const handleRemoveNode = useCallback(
+    (targetImageId) => {
+      const targetNodeId = `node-sketch-${targetImageId}`;
+      if (setNodesRef.current) {
+        setNodesRef.current((nds) => {
+          const next = nds.filter((n) => n.id !== targetNodeId && n.data?.sketch?.imageId !== targetImageId);
+          if (setCanvasNodes) setCanvasNodes(next);
+          return next;
+        });
+      }
+
+      setEdges((eds) => {
+        const nextEdges = eds.filter(
+          (e) => e.source !== targetNodeId && e.target !== targetNodeId
+        );
+        if (setCanvasEdges) setCanvasEdges(nextEdges);
+        return nextEdges;
+      });
+
+      if (removeSessionSketch) {
+        removeSessionSketch(targetImageId);
+      }
+
+      addToast(`Candidate node removed from workspace.`, 'info');
+      recordAuditAction('CANDIDATE_NODE_REMOVED', targetImageId, `Investigator removed candidate node ${targetImageId} from workspace`);
+    },
+    [setCanvasNodes, setCanvasEdges, removeSessionSketch, addToast, recordAuditAction]
+  );
+
   // Pre-define generation trigger reference
   const triggerRef = useRef(null);
 
@@ -420,7 +464,8 @@ export default function ImageGenStudioPage() {
       handleFinalizeSketch,
       handleOpenRefine,
       handleOpenCompare,
-      handleDownloadPng
+      handleDownloadPng,
+      handleRemoveNode
     };
     const promptState = {
       prompt,
@@ -491,17 +536,24 @@ export default function ImageGenStudioPage() {
     setIsProcessing(true);
 
     try {
-      const candidates = await generateCandidates({
+      const genResult = await generateCandidates({
         prompt: activePrompt,
         language: activeLanguage,
         numCandidates: activeNumCandidates,
         imageType: activeImageType,
-        caseId: caseNumber,
+        caseId: activeCaseId || caseNumber,
         iteration: 1
       });
 
+      const candidates = genResult.candidates || (Array.isArray(genResult) ? genResult : []);
+      const returnedCaseId = genResult.caseId;
+
       if (!candidates || candidates.length === 0) {
         throw new Error('No candidate sketches generated');
+      }
+
+      if (returnedCaseId && setActiveCaseId) {
+        setActiveCaseId(returnedCaseId);
       }
 
       const hasMockFallback = candidates.some((c) => c.isMock);
@@ -511,7 +563,8 @@ export default function ImageGenStudioPage() {
         addToast('API Fallback Active: Generated offline mock candidate previews.', 'warning');
       } else {
         setApiFallbackReason('');
-        addToast(`Successfully synthesized ${candidates.length} live Worker AI candidates.`, 'success');
+        const sourceLabel = genResult.source === 'backend_ai' ? 'Backend Worker AI' : 'Cloudflare Worker AI';
+        addToast(`Successfully synthesized ${candidates.length} live ${sourceLabel} candidates.`, 'success');
       }
 
       // Add all candidate variations into session state (first candidate active base by default)
@@ -542,7 +595,8 @@ export default function ImageGenStudioPage() {
             onFinalize: handleFinalizeSketch,
             onRefine: handleOpenRefine,
             onCompare: handleOpenCompare,
-            onDownloadPng: handleDownloadPng
+            onDownloadPng: handleDownloadPng,
+            onRemoveNode: handleRemoveNode
           }
         };
       });
@@ -643,7 +697,8 @@ export default function ImageGenStudioPage() {
           onFinalize: handleFinalizeSketch,
           onRefine: handleOpenRefine,
           onCompare: handleOpenCompare,
-          onDownloadPng: handleDownloadPng
+          onDownloadPng: handleDownloadPng,
+          onRemoveNode: handleRemoveNode
         }
       };
 

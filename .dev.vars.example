@@ -1,0 +1,14 @@
+# Cloudflare AI Worker Integration (Matches API Handoff Specifications)
+EXTERNAL_WORKER_URL=https://lingering-cake-50cc.adeepag13.workers.dev
+EXTERNAL_WORKER_TOKEN=your-deployed-worker-api-token-here
+
+# Backward compatibility bindings
+CLOUDFLARE_WORKER_URL=https://lingering-cake-50cc.adeepag13.workers.dev
+CLOUDFLARE_WORKER_TOKEN=your-deployed-worker-api-token-here
+
+ENVIRONMENT=development
+MOCK_AI=true
+JWT_SECRET=crime-sketch-forensic-secret-key-2026
+MAX_FILE_SIZE_BYTES=10485760
+DEFAULT_IMAGE_WIDTH=1024
+DEFAULT_IMAGE_HEIGHT=1024
