@@ -26,7 +26,6 @@
   // },
   "vars": {
     "ENVIRONMENT": "development",
-    "MOCK_AI": "true",
     "JWT_SECRET": "crime-sketch-forensic-secret-key-2026",
     "MAX_FILE_SIZE_BYTES": "10485760",
     "DEFAULT_IMAGE_WIDTH": "1024",

@@ -1,78 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { generateBlockHash, calculateSha256 } from '../utils/hashUtils';
+import { selectCandidateImage, fetchSavedCandidateSelection, createMockCandidatePreview } from '../services/api';
 
 const SessionContext = createContext();
-
-const INITIAL_SKETCH = {
-  imageId: 'IMG-SKETCH-1042',
-  imageUrl: '/api/images/IMG-SKETCH-1042/file',
-  prompt: 'Male, early 30s, sharp square jawline, deep-set almond eyes, straight narrow nose, 3-day stubble, vertical scar above left eyebrow',
-  seed: 1042,
-  iteration: 1,
-  parentId: null,
-  createdAt: '2026-10-28T09:30:00.000Z',
-  imageHash: '8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4',
-  confidenceScore: 94.2,
-  changeDescription: 'Initial witness testimony composite generated via forensic multimodal pipeline',
-  features: {
-    faceShape: 'Angular Oval',
-    jawline: 'Sharp Square',
-    eyes: 'Deep-set Almond',
-    nose: 'Straight Narrow Bridge',
-    facialHair: '3-Day Heavy Stubble',
-    marks: 'Scar on Left Eyebrow',
-    ageRange: '28-35'
-  }
-};
-
-const INITIAL_FLOW_NODES = [
-  {
-    id: 'node-prompt-root',
-    type: 'promptNode',
-    position: { x: 40, y: 100 },
-    data: {}
-  },
-  {
-    id: 'node-extractor-root',
-    type: 'featureExtractorNode',
-    position: { x: 410, y: 100 },
-    data: {
-      features: INITIAL_SKETCH.features,
-      status: 'EXTRACTED',
-      confidence: 94.8
-    }
-  },
-  {
-    id: 'node-sketch-1042',
-    type: 'candidateSketchNode',
-    position: { x: 780, y: 60 },
-    data: {
-      sketch: INITIAL_SKETCH,
-      isFinalized: true
-    }
-  }
-];
-
-const INITIAL_FLOW_EDGES = [
-  {
-    id: 'edge-prompt-extractor',
-    source: 'node-prompt-root',
-    sourceHandle: 'prompt-out',
-    target: 'node-extractor-root',
-    targetHandle: 'feature-in',
-    animated: true,
-    style: { stroke: '#38BDF8', strokeWidth: 2 }
-  },
-  {
-    id: 'edge-extractor-sketch-1042',
-    source: 'node-extractor-root',
-    sourceHandle: 'feature-out',
-    target: 'node-sketch-1042',
-    targetHandle: 'sketch-in',
-    animated: true,
-    style: { stroke: '#10B981', strokeWidth: 2 }
-  }
-];
 
 export function SessionProvider({ children }) {
   // Active Officer & Jurisdiction Identity
@@ -86,6 +16,13 @@ export function SessionProvider({ children }) {
 
   const [sessionId] = useState('SES-2026-8841');
   const [caseNumber] = useState('FIR-BLR-2026-0194');
+  const [activeCaseId, setActiveCaseId] = useState(() => {
+    try {
+      return localStorage.getItem('forensic_active_case_id') || null;
+    } catch {
+      return null;
+    }
+  });
   const [caseInfo] = useState({
     incidentType: 'Armed Commercial Robbery',
     policeStation: 'Hebbal Police Station, Bengaluru',
@@ -93,15 +30,68 @@ export function SessionProvider({ children }) {
     interviewDate: '28 Oct 2026'
   });
 
-  // Stored Session-wise image iterations
-  const [sessionImages, setSessionImages] = useState([INITIAL_SKETCH]);
+  // Stored Session-wise image iterations with localStorage persistence across refreshes (empty until user generates)
+  const [sessionImages, setSessionImages] = useState(() => {
+    try {
+      const saved = localStorage.getItem('forensic_session_images');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter((img) => img.imageId && img.imageId !== 'IMG-SKETCH-1042');
+        }
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  });
 
-  // Selected Finalized Composite for DB verification and high-res export
-  const [finalizedSketch, setFinalizedSketch] = useState(INITIAL_SKETCH);
+  // Selected Finalized Composite for DB verification and high-res export (null until candidate generated & selected)
+  const [finalizedSketch, setFinalizedSketch] = useState(() => {
+    try {
+      const saved = localStorage.getItem('forensic_finalized_sketch');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.imageId && parsed.imageId !== 'IMG-SKETCH-1042') {
+          return parsed;
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
 
-  // Persisted Graph Canvas Nodes & Edges across page navigations
-  const [canvasNodes, setCanvasNodes] = useState(null);
-  const [canvasEdges, setCanvasEdges] = useState(null);
+  // Persisted Graph Canvas Nodes & Edges across page navigations & refreshes (excluding legacy dummy nodes)
+  const [canvasNodes, setCanvasNodes] = useState(() => {
+    try {
+      const saved = localStorage.getItem('forensic_canvas_nodes');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter((n) => n.id !== 'node-sketch-IMG-SKETCH-1042' && n.data?.sketch?.imageId !== 'IMG-SKETCH-1042');
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [canvasEdges, setCanvasEdges] = useState(() => {
+    try {
+      const saved = localStorage.getItem('forensic_canvas_edges');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter((e) => !e.id?.includes('IMG-SKETCH-1042') && e.source !== 'node-sketch-IMG-SKETCH-1042' && e.target !== 'node-sketch-IMG-SKETCH-1042');
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
 
   // Criminal Database Integrator State: 'SYNTHETIC_DEMO' | 'CUSTOM_IMPORTED'
   const [registryMode, setRegistryMode] = useState(() => {
@@ -180,34 +170,17 @@ export function SessionProvider({ children }) {
       timestamp: '2026-10-28T09:00:00.000Z',
       prevHash: '0000000000000000000000000000000000000000000000000000000000000000',
       currHash: '4a9e8b2c1d3f5a7e9b0c2d4f6a8e1b3c5d7f9a1b2c3d4e5f6a7b8c9d0e1f2a3b'
-    },
-    {
-      blockIndex: 2,
-      sessionId: 'SES-2026-8841',
-      caseNumber: 'FIR-BLR-2026-0194',
-      imageId: 'IMG-SKETCH-1042',
-      memberId: 'OFF-KA-402',
-      memberName: 'Insp. Vikram Rao',
-      action: 'SKETCH_NODE_GENERATED',
-      metadata: 'Initial composite sketch generated with seed 1042',
-      timestamp: '2026-10-28T09:30:00.000Z',
-      prevHash: '4a9e8b2c1d3f5a7e9b0c2d4f6a8e1b3c5d7f9a1b2c3d4e5f6a7b8c9d0e1f2a3b',
-      currHash: '8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4'
     }
   ]);
 
-  // Synchronously compute Genesis and initial block hashes to ensure genuine cryptographic links
+  // Synchronously compute Genesis block hash to ensure genuine cryptographic links
   useEffect(() => {
     async function initAuditHashes() {
       const b1 = auditLogs[0];
-      const h1 = await generateBlockHash(b1);
-      const b2 = { ...auditLogs[1], prevHash: h1 };
-      const h2 = await generateBlockHash(b2);
-
-      setAuditLogs([
-        { ...b1, currHash: h1 },
-        { ...b2, currHash: h2 }
-      ]);
+      if (b1) {
+        const h1 = await generateBlockHash(b1);
+        setAuditLogs([{ ...b1, currHash: h1 }]);
+      }
     }
     initAuditHashes();
   }, []);
@@ -280,41 +253,128 @@ export function SessionProvider({ children }) {
     addToast('Cryptographic audit chain restored and re-hashed.', 'success');
   }, [auditLogs, addToast]);
 
+  // Persist session images & finalized sketch to localStorage whenever updated
+  useEffect(() => {
+    try {
+      localStorage.setItem('forensic_session_images', JSON.stringify(sessionImages));
+    } catch {
+      // Ignore quota
+    }
+  }, [sessionImages]);
+
+  useEffect(() => {
+    if (finalizedSketch) {
+      try {
+        localStorage.setItem('forensic_finalized_sketch', JSON.stringify(finalizedSketch));
+      } catch {
+        // Ignore quota
+      }
+    }
+  }, [finalizedSketch]);
+
+  // Sync canvas nodes & edges to localStorage
+  const updateCanvasNodes = useCallback((nodes) => {
+    setCanvasNodes(nodes);
+    try {
+      localStorage.setItem('forensic_canvas_nodes', JSON.stringify(nodes));
+    } catch {}
+  }, []);
+
+  const updateCanvasEdges = useCallback((edges) => {
+    setCanvasEdges(edges);
+    try {
+      localStorage.setItem('forensic_canvas_edges', JSON.stringify(edges));
+    } catch {}
+  }, []);
+
+  // Sync saved candidate selection from backend on mount or when case changes
+  useEffect(() => {
+    let isSubscribed = true;
+    async function syncBackendSelection() {
+      try {
+        const targetCase = activeCaseId || localStorage.getItem('forensic_active_case_id') || caseNumber;
+        const savedId = await fetchSavedCandidateSelection({ caseId: targetCase });
+        if (savedId && isSubscribed) {
+          const match = sessionImages.find((img) => img.imageId === savedId);
+          if (match && match.imageId !== finalizedSketch?.imageId) {
+            setFinalizedSketch(match);
+          }
+        }
+      } catch (err) {
+        // Silent fallback
+      }
+    }
+    syncBackendSelection();
+    return () => {
+      isSubscribed = false;
+    };
+  }, [activeCaseId, caseNumber, sessionImages]);
+
   // Adds a newly generated or refined sketch to the session
   const addSessionSketch = useCallback((newSketch) => {
     setSessionImages((prev) => [newSketch, ...prev]);
     setFinalizedSketch(newSketch);
   }, []);
 
+  // Finalizes the sketch as active base image, persists to backend and logs audit event
+  const finalizeSketch = useCallback((sketch) => {
+    if (!sketch) return;
+    setFinalizedSketch(sketch);
+    recordAuditAction('SELECTED_AS_BASE_IMAGE', sketch.imageId, `Selected iteration #${sketch.iteration || 1} as active base composite for refinement`);
+    addToast(`Sketch ${sketch.label || sketch.imageId} selected as Base Image for refinement.`, 'success');
+
+    const targetCaseId = sketch.caseId || activeCaseId || localStorage.getItem('forensic_active_case_id') || caseNumber;
+
+    // Persist selected candidate image through the backend service
+    selectCandidateImage({ caseId: targetCaseId, imageId: sketch.imageId, isMock: sketch.isMock }).catch((err) => {
+      console.warn('[SessionContext] Async candidate selection sync notice:', err.message);
+    });
+  }, [recordAuditAction, addToast, caseNumber, activeCaseId]);
+
   // Adds multiple candidate sketches generated in stage 1
   const addSessionSketches = useCallback((newSketches, activeCandidateIndex = 0) => {
     if (!newSketches || newSketches.length === 0) return;
-    setSessionImages((prev) => [...newSketches, ...prev]);
-    if (newSketches[activeCandidateIndex]) {
-      setFinalizedSketch(newSketches[activeCandidateIndex]);
+    const firstSketch = newSketches[activeCandidateIndex] || newSketches[0];
+    if (firstSketch?.caseId) {
+      setActiveCaseId(firstSketch.caseId);
+      try {
+        localStorage.setItem('forensic_active_case_id', firstSketch.caseId);
+      } catch {}
     }
+    setSessionImages((prev) => [...newSketches, ...prev]);
+    if (firstSketch) {
+      finalizeSketch(firstSketch);
+    }
+  }, [finalizeSketch]);
+
+
+  // Removes a candidate sketch node from the session
+  const removeSessionSketch = useCallback((targetImageId) => {
+    setSessionImages((prev) => {
+      const remaining = prev.filter((img) => img.imageId !== targetImageId);
+      try {
+        localStorage.setItem('forensic_session_images', JSON.stringify(remaining));
+      } catch {}
+
+      setFinalizedSketch((currentFinalized) => {
+        if (currentFinalized?.imageId === targetImageId) {
+          const nextActive = remaining[0] || null;
+          try {
+            if (nextActive) {
+              localStorage.setItem('forensic_finalized_sketch', JSON.stringify(nextActive));
+            } else {
+              localStorage.removeItem('forensic_finalized_sketch');
+            }
+          } catch {}
+          return nextActive;
+        }
+        return currentFinalized;
+      });
+
+      return remaining;
+    });
   }, []);
 
-  // Finalizes the sketch for database search & PDF export and synchronizes node states
-  const finalizeSketch = useCallback((sketch) => {
-    setFinalizedSketch(sketch);
-    setFlowNodes((prev) =>
-      prev.map((n) => {
-        if (n.type === 'candidateSketchNode') {
-          return {
-            ...n,
-            data: {
-              ...n.data,
-              isFinalized: n.data?.sketch?.imageId === sketch.imageId
-            }
-          };
-        }
-        return n;
-      })
-    );
-    recordAuditAction('FINALIZED_SKETCH_FOR_VERIFICATION', sketch.imageId, `Selected iteration #${sketch.iteration}`);
-    addToast(`Sketch ${sketch.imageId} finalized for Law Enforcement DB verification.`, 'success');
-  }, [recordAuditAction, addToast]);
 
   // Adds a candidate or branch sketch node to both sessionImages and persistent flow graph
   const addGraphCandidateNode = useCallback(({ sketch, parentSketchId = null }) => {
@@ -400,10 +460,13 @@ export function SessionProvider({ children }) {
         officer,
         sessionId,
         caseNumber,
+        activeCaseId,
+        setActiveCaseId,
         caseInfo,
         sessionImages,
         addSessionSketch,
         addSessionSketches,
+        removeSessionSketch,
         finalizedSketch,
         finalizeSketch,
         flowNodes,
@@ -423,9 +486,9 @@ export function SessionProvider({ children }) {
         addToast,
         removeToast,
         canvasNodes,
-        setCanvasNodes,
+        setCanvasNodes: updateCanvasNodes,
         canvasEdges,
-        setCanvasEdges,
+        setCanvasEdges: updateCanvasEdges,
         registryMode,
         setRegistryMode,
         customDbRecords,

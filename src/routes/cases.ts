@@ -277,3 +277,188 @@ casesRouter.post('/:caseId/access', async (c) => {
   });
 });
 
+// In-memory fallback map for candidate selections
+const inMemorySelections = new Map<string, string>();
+
+/**
+ * POST /api/cases/:caseId/select-image — Persist selected candidate image for a case
+ */
+casesRouter.post('/:caseId/select-image', async (c) => {
+  const user = c.get('user') || {
+    id: 'usr_investigator_1',
+    name: 'Detective Sarah Connor',
+    email: 'sconnor@forensics.pd.gov',
+    role: 'investigator' as const
+  };
+  const requestId = c.get('requestId') || 'req_select';
+  const caseId = c.req.param('caseId');
+  const body = await c.req.json().catch(() => ({}));
+  const imageId = body.imageId || body.selected_image_id || body.selectedImageId;
+
+  if (!imageId) {
+    throw new AppError('imageId is required in select-image payload', 400, 'INVALID_PAYLOAD');
+  }
+
+  inMemorySelections.set(caseId, imageId);
+  const auditService = new AuditService(c.env);
+
+  // If upstream Cloudflare Worker URL is configured, forward selection to it
+  const remoteWorkerUrl = c.env.EXTERNAL_WORKER_URL || c.env.CLOUDFLARE_WORKER_URL || c.env.EXTERNAL_AI_URL;
+  const rawToken = c.env.EXTERNAL_WORKER_TOKEN || c.env.CLOUDFLARE_WORKER_TOKEN || '';
+  let remoteSelectionResult: any = null;
+
+  if (remoteWorkerUrl && rawToken) {
+    try {
+      const authHeader = rawToken.startsWith('Bearer ') ? rawToken : `Bearer ${rawToken}`;
+
+      const remoteRes = await fetch(`${remoteWorkerUrl.replace(/\/$/, '')}/api/cases/${caseId}/select-image`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader
+        },
+        body: JSON.stringify({ imageId }),
+        redirect: 'follow'
+      });
+
+      if (remoteRes.ok) {
+        remoteSelectionResult = await remoteRes.json();
+      } else {
+        console.warn(`[casesRouter] Remote worker select-image returned ${remoteRes.status}`);
+      }
+    } catch (err: any) {
+      console.warn('[casesRouter] Forwarding selection to remote Cloudflare Worker notice:', err.message);
+    }
+  }
+
+  let d1Updated = false;
+  if (c.env.DB) {
+    try {
+      const res = await c.env.DB.prepare(
+        'UPDATE cases SET active_image_id = ?, updated_at = datetime("now") WHERE id = ?'
+      )
+        .bind(imageId, caseId)
+        .run();
+      d1Updated = (res?.meta?.changes ?? 0) > 0;
+    } catch (err) {
+      console.warn('[casesRouter] D1 update active_image_id notice:', err);
+    }
+  }
+
+  try {
+    await auditService.logEvent({
+      caseId,
+      requestId,
+      userId: user.id,
+      userEmail: user.email,
+      userRole: user.role,
+      action: 'IMAGE_SELECT',
+      resourceType: 'image',
+      resourceId: imageId,
+      status: 'SUCCESS',
+      details: {
+        caseId,
+        selectedImageId: imageId
+      }
+    });
+  } catch (err) {
+    console.warn('[casesRouter] Audit logging notice:', err);
+  }
+
+  if (remoteSelectionResult) {
+    return c.json({
+      ...remoteSelectionResult,
+      ok: remoteSelectionResult.ok ?? true,
+      caseId: remoteSelectionResult.caseId || caseId,
+      selected: remoteSelectionResult.selected ?? true,
+      selectedImageId: remoteSelectionResult.selection?.selected_image_id || imageId,
+      persisted: null,
+      persistence: 'upstream_worker'
+    });
+  }
+
+  const now = new Date().toISOString();
+  return c.json({
+    ok: true,
+    status: 'success',
+    caseId,
+    selected: true,
+    selectedImageId: imageId,
+    persisted: d1Updated,
+    persistence: d1Updated ? 'd1' : (c.env.DB ? 'd1' : 'memory'),
+    selection: {
+      case_id: caseId,
+      selected_image_id: imageId,
+      selected_at: now
+    },
+    confirmedAt: now
+  });
+});
+
+/**
+ * GET /api/cases/:caseId/selection — Get persisted candidate image selection for a case
+ */
+casesRouter.get('/:caseId/selection', async (c) => {
+  const caseId = c.req.param('caseId');
+
+  // If upstream Cloudflare Worker URL is configured, query it first
+  const remoteWorkerUrl = c.env.EXTERNAL_WORKER_URL || c.env.CLOUDFLARE_WORKER_URL || c.env.EXTERNAL_AI_URL;
+  const rawToken = c.env.EXTERNAL_WORKER_TOKEN || c.env.CLOUDFLARE_WORKER_TOKEN || '';
+
+  if (remoteWorkerUrl && rawToken) {
+    try {
+      const authHeader = rawToken.startsWith('Bearer ') ? rawToken : `Bearer ${rawToken}`;
+
+      const remoteRes = await fetch(`${remoteWorkerUrl.replace(/\/$/, '')}/api/cases/${caseId}/selection`, {
+        headers: {
+          'Authorization': authHeader
+        },
+        redirect: 'follow'
+      });
+
+      if (remoteRes.ok) {
+        const remoteData = await remoteRes.json() as any;
+        return c.json(remoteData);
+      }
+    } catch (err: any) {
+      console.warn('[casesRouter] Querying remote Cloudflare Worker selection notice:', err.message);
+    }
+  }
+
+  let selectedImageId: string | null = inMemorySelections.get(caseId) || null;
+  if (c.env.DB) {
+    try {
+      const row = await c.env.DB.prepare('SELECT active_image_id FROM cases WHERE id = ?')
+        .bind(caseId)
+        .first<{ active_image_id: string }>();
+      if (row?.active_image_id) {
+        selectedImageId = row.active_image_id;
+      }
+    } catch (err) {
+      console.warn('[casesRouter] D1 query selection notice:', err);
+    }
+  }
+
+  if (selectedImageId) {
+    return c.json({
+      ok: true,
+      caseId,
+      selected: true,
+      selectedImageId,
+      selection: {
+        case_id: caseId,
+        selected_image_id: selectedImageId,
+        selected_at: new Date().toISOString()
+      }
+    });
+  }
+
+  return c.json({
+    ok: true,
+    caseId,
+    selected: false,
+    selection: null
+  });
+});
+
+

@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { Env, HonoVariables } from '../types';
+import { ImageService } from '../services/image.service';
 
 export const forensicsRouter = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
@@ -268,5 +269,94 @@ forensicsRouter.post('/verify-db', async (c) => {
     topMatch: scored[0] || null,
     matches: scored
   });
+});
+
+/**
+ * POST /api/generate-candidates
+ * Compatibility endpoint matching deployed Cloudflare Worker API contract
+ */
+forensicsRouter.post('/generate-candidates', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const prompt = body.prompt || 'Adult male suspect with defined features';
+  const imageType = body.imageType || 'sketch';
+  const numCandidates = Math.min(Math.max(Number(body.numCandidates) || 4, 1), 4);
+  const caseId = body.caseId || 'case_sample_001';
+
+  // If upstream Cloudflare Worker URL is configured, forward candidate generation to it
+  const remoteWorkerUrl = c.env.EXTERNAL_WORKER_URL || c.env.CLOUDFLARE_WORKER_URL || c.env.EXTERNAL_AI_URL;
+  const rawToken = c.env.EXTERNAL_WORKER_TOKEN || c.env.CLOUDFLARE_WORKER_TOKEN || '';
+  if (remoteWorkerUrl && rawToken) {
+    try {
+      const authHeader = rawToken.startsWith('Bearer ') ? rawToken : `Bearer ${rawToken}`;
+
+      // Per handoff doc: proxies to live worker with only { prompt, imageType }
+      const remoteRes = await fetch(`${remoteWorkerUrl.replace(/\/$/, '')}/api/generate-candidates`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader
+        },
+        body: JSON.stringify({ prompt, imageType }),
+        redirect: 'follow'
+      });
+
+      if (remoteRes.ok) {
+        const remoteData = await remoteRes.json() as any;
+        return c.json(remoteData, 201);
+      } else {
+        console.warn(`[forensicsRouter] Remote Cloudflare Worker returned status ${remoteRes.status}`);
+        return c.json({
+          error: 'EXTERNAL_WORKER_UNAVAILABLE',
+          status: remoteRes.status,
+          message: `Remote worker returned ${remoteRes.status}`
+        }, 502);
+      }
+    } catch (err: any) {
+      console.warn('[forensicsRouter] Remote Cloudflare Worker unreachable:', err.message);
+      return c.json({
+        error: 'EXTERNAL_WORKER_UNAVAILABLE',
+        message: err.message
+      }, 502);
+    }
+  }
+
+  const user = c.get('user') || {
+    id: 'usr_investigator_1',
+    name: 'Detective Sarah Connor',
+    email: 'sconnor@forensics.pd.gov',
+    role: 'investigator' as const
+  };
+  const requestId = c.get('requestId') || 'req_cand_gen';
+
+  const imageService = new ImageService(c.env);
+  const modelName = imageType === 'sketch'
+    ? '@cf/stabilityai/stable-diffusion-xl-base-1.0'
+    : '@cf/bytedance/stable-diffusion-xl-lightning';
+
+  const result = await imageService.generateCandidates(
+    {
+      caseId,
+      prompt,
+      modelName,
+      numCandidates,
+      parameters: { imageType }
+    },
+    user,
+    requestId
+  );
+
+  return c.json({
+    status: 'success',
+    caseId,
+    totalCandidates: result.candidates.length,
+    candidates: result.candidates.map((cand, idx) => ({
+      id: cand.id,
+      label: `Candidate ${String.fromCharCode(65 + idx)}`,
+      imageType,
+      model: cand.modelName,
+      imageUrl: cand.imageUrl,
+      previewDataUri: cand.previewDataUri
+    }))
+  }, 201);
 });
 
