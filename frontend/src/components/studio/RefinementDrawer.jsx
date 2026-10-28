@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { GitBranch, Sparkles, X, SlidersHorizontal, RefreshCw, Mic, MicOff } from 'lucide-react';
+import { GitBranch, Sparkles, X, SlidersHorizontal, RefreshCw, Mic, MicOff, Languages } from 'lucide-react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
-import { startVoiceRecognition, isSpeechRecognitionSupported } from '../../utils/speech';
+import { startVoiceRecognition, isSpeechRecognitionSupported, SUPPORTED_LANGUAGES } from '../../utils/speech';
+import { translateWithGemini } from '../../services/geminiService';
 
 export default function RefinementDrawer({
   isOpen,
@@ -22,9 +23,22 @@ export default function RefinementDrawer({
   const [additionalNote, setAdditionalNote] = useState('');
   const [targetedRegions, setTargetedRegions] = useState(['jawline', 'eyes', 'nose']);
 
+  // Multilingual STT & Gemini 3.5 Live Preview state
+  const [refineLanguage, setRefineLanguage] = useState(language || 'en-IN');
+  const [originalVoiceNote, setOriginalVoiceNote] = useState(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [geminiModel, setGeminiModel] = useState('gemini-3.5-live-preview');
+
   const [isRecording, setIsRecording] = useState(false);
   const [recognitionController, setRecognitionController] = useState(null);
   const sttSupported = isSpeechRecognitionSupported();
+
+  // Synchronize language when prop changes
+  useEffect(() => {
+    if (language) {
+      setRefineLanguage(language);
+    }
+  }, [language]);
 
   // Reset or abort recognition when modal closes or parentSketch changes
   useEffect(() => {
@@ -42,6 +56,7 @@ export default function RefinementDrawer({
       setFacialHair(parentSketch.features?.facialHair || '3-Day Heavy Stubble');
       setMarks(parentSketch.features?.marks || 'Scar on Left Eyebrow');
       setAdditionalNote('');
+      setOriginalVoiceNote(null);
       setTargetedRegions(['jawline', 'eyes']);
       setIsRecording(false);
     }
@@ -62,10 +77,27 @@ export default function RefinementDrawer({
 
     setIsRecording(true);
     const ctrl = startVoiceRecognition(
-      language || 'en-IN',
-      (transcribed) => {
-        setAdditionalNote((prev) => (prev ? `${prev} ${transcribed}` : transcribed));
+      refineLanguage || 'en-IN',
+      async (transcribed) => {
         setIsRecording(false);
+        setOriginalVoiceNote(transcribed);
+
+        setIsTranslating(true);
+        try {
+          const res = await translateWithGemini({
+            text: transcribed,
+            sourceLanguage: refineLanguage,
+            context: 'refinement'
+          });
+          const updated = res.englishPrompt;
+          setAdditionalNote((prev) => (prev ? `${prev}, ${updated}` : updated));
+          if (res.modelUsed) setGeminiModel(res.modelUsed);
+        } catch (err) {
+          console.error('Gemini refinement translation failed:', err);
+          setAdditionalNote((prev) => (prev ? `${prev} ${transcribed}` : transcribed));
+        } finally {
+          setIsTranslating(false);
+        }
       },
       (err) => {
         console.warn('Voice recognition note:', err);
@@ -76,6 +108,25 @@ export default function RefinementDrawer({
       }
     );
     setRecognitionController(ctrl);
+  };
+
+  const handleManualTranslate = async () => {
+    if (!additionalNote.trim() || isTranslating) return;
+    setIsTranslating(true);
+    try {
+      const res = await translateWithGemini({
+        text: additionalNote,
+        sourceLanguage: refineLanguage,
+        context: 'refinement'
+      });
+      setOriginalVoiceNote(additionalNote);
+      setAdditionalNote(res.englishPrompt);
+      if (res.modelUsed) setGeminiModel(res.modelUsed);
+    } catch (err) {
+      console.warn('Refinement translation error:', err);
+    } finally {
+      setIsTranslating(false);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -252,29 +303,61 @@ export default function RefinementDrawer({
           </select>
         </div>
 
-        {/* Natural Language Freeform Adjustment with Verbal Voice Mic Option */}
-        <div>
-          <div className="flex items-center justify-between mb-1">
+        {/* Natural Language Freeform Adjustment with Multilingual STT & Gemini 3.5 Live Preview */}
+        <div className="space-y-1.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
             <label className="text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
               <span>Witness Refinement Feedback</span>
               <span className="text-[10px] text-slate-500 font-mono">(Type or speak)</span>
             </label>
 
-            {/* Mic Toggle Button */}
-            <button
-              type="button"
-              onClick={handleToggleVoice}
-              disabled={!sttSupported}
-              className={`flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-medium transition-all ${
-                isRecording
-                  ? 'bg-rose-950/90 border-rose-500 text-rose-300 animate-pulse shadow-sm shadow-rose-500/20'
-                  : 'bg-navy-950 hover:bg-slate-800 border-slate-700 text-sky-400 hover:text-sky-300'
-              } disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer`}
-              title={sttSupported ? 'Click to verbally dictate witness feedback' : 'Voice input not supported in this browser'}
-            >
-              <Mic size={12} className={isRecording ? 'text-rose-400 animate-bounce' : 'text-sky-400'} />
-              <span>{isRecording ? 'Listening... (Speak now)' : 'Voice Input (STT)'}</span>
-            </button>
+            {/* Language Selector & Mic Controls */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="flex items-center gap-1 bg-navy-950 border border-slate-700 rounded px-1.5 py-0.5">
+                <Languages size={11} className="text-sky-400" />
+                <select
+                  value={refineLanguage}
+                  onChange={(e) => setRefineLanguage(e.target.value)}
+                  className="bg-transparent text-[10px] text-slate-200 focus:outline-none cursor-pointer"
+                  title="Interview Language for Refinement Voice Input"
+                >
+                  {SUPPORTED_LANGUAGES.map((lang) => (
+                    <option key={lang.code} value={lang.code} className="bg-navy-900 text-slate-100">
+                      {lang.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {additionalNote.trim() && (
+                <button
+                  type="button"
+                  onClick={handleManualTranslate}
+                  disabled={isTranslating}
+                  className="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 bg-cyan-950/60 border border-cyan-700/60 px-1.5 py-0.5 rounded transition-all cursor-pointer disabled:opacity-50"
+                  title="Translate feedback into English forensic prompt via Gemini 3.5 Live Preview"
+                >
+                  <Sparkles size={10} className={isTranslating ? 'animate-spin' : ''} />
+                  <span>Translate</span>
+                </button>
+              )}
+
+              {/* Mic Toggle Button */}
+              <button
+                type="button"
+                onClick={handleToggleVoice}
+                disabled={!sttSupported || isTranslating}
+                className={`flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-medium transition-all ${
+                  isRecording
+                    ? 'bg-rose-950/90 border-rose-500 text-rose-300 animate-pulse shadow-sm shadow-rose-500/20'
+                    : 'bg-navy-950 hover:bg-slate-800 border-slate-700 text-sky-400 hover:text-sky-300'
+                } disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer`}
+                title={sttSupported ? `Click to dictate in ${SUPPORTED_LANGUAGES.find(l => l.code === refineLanguage)?.name || 'selected language'}` : 'Voice input not supported in this browser'}
+              >
+                <Mic size={12} className={isRecording ? 'text-rose-400 animate-bounce' : 'text-sky-400'} />
+                <span>{isRecording ? 'Listening...' : 'Voice Input (STT)'}</span>
+              </button>
+            </div>
           </div>
 
           <div className="relative">
@@ -289,7 +372,7 @@ export default function RefinementDrawer({
             <button
               type="button"
               onClick={handleToggleVoice}
-              disabled={!sttSupported}
+              disabled={!sttSupported || isTranslating}
               className={`absolute right-2.5 top-2.5 p-1.5 rounded transition-all cursor-pointer ${
                 isRecording
                   ? 'bg-rose-500 text-white animate-pulse shadow-md shadow-rose-500/30'
@@ -301,10 +384,36 @@ export default function RefinementDrawer({
             </button>
           </div>
 
+          {/* Gemini 3.5 Live Preview Translation Shimmer */}
+          {isTranslating && (
+            <div className="flex items-center gap-1.5 p-1.5 bg-cyan-950/80 border border-cyan-500/50 rounded text-[10px] text-cyan-300 animate-pulse">
+              <Sparkles size={11} className="text-cyan-400 shrink-0 animate-spin" />
+              <span>Gemini 3.5 Live Preview: Translating refinement to English prompt...</span>
+            </div>
+          )}
+
+          {/* Bilingual Spoken Transcript Card */}
+          {originalVoiceNote && !isTranslating && (
+            <div className="p-1.5 bg-navy-950/90 border border-slate-800 rounded text-[10px] space-y-1">
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="flex items-center gap-1 font-semibold text-slate-300">
+                  <Languages size={10} className="text-sky-400" />
+                  Spoken ({SUPPORTED_LANGUAGES.find((l) => l.code === refineLanguage)?.name || refineLanguage}):
+                </span>
+                <span className="font-mono text-[9px] text-cyan-400 flex items-center gap-1 bg-cyan-950/70 border border-cyan-800/80 px-1 py-0.2 rounded">
+                  <Sparkles size={8} /> Gemini 3.5 English Directives
+                </span>
+              </div>
+              <p className="text-slate-300 italic line-clamp-2 bg-slate-900/60 p-1 rounded border border-slate-800/60">
+                "{originalVoiceNote}"
+              </p>
+            </div>
+          )}
+
           {isRecording && (
             <p className="text-[10px] text-rose-400 font-mono mt-1 flex items-center gap-1.5 animate-pulse">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-              Microphone listening for witness statement... Speak adjustments aloud.
+              Microphone listening in {SUPPORTED_LANGUAGES.find((l) => l.code === refineLanguage)?.name || 'selected language'}... Speak adjustments aloud.
             </p>
           )}
         </div>

@@ -123,6 +123,8 @@ export interface Env {
   MAX_FILE_SIZE_BYTES?: string;
   DEFAULT_IMAGE_WIDTH?: string;
   DEFAULT_IMAGE_HEIGHT?: string;
+  GEMINI_API_KEY?: string;
+  GEMINI_MODEL?: string;
 }
 
 export interface AuthenticatedUser {

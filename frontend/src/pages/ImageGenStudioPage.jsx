@@ -320,7 +320,7 @@ export default function ImageGenStudioPage() {
   // Ref to setNodes for stable callbacks
   const setNodesRef = useRef(null);
 
-  const handlePromptChange = useCallback((newPrompt) => {
+  const handlePromptChange = useCallback(async (newPrompt) => {
     setPrompt(newPrompt);
     if (setNodesRef.current) {
       setNodesRef.current((nds) =>
@@ -330,6 +330,22 @@ export default function ImageGenStudioPage() {
             : n
         )
       );
+
+      // If prompt has content, update Node 2 (feature extractor) live
+      if (newPrompt && newPrompt.trim().length > 5) {
+        try {
+          const extracted = await extractFeatures({ prompt: newPrompt });
+          setNodesRef.current((nds) =>
+            nds.map((n) =>
+              n.id === 'node-extractor-root'
+                ? { ...n, data: { ...n.data, features: extracted } }
+                : n
+            )
+          );
+        } catch {
+          // Heuristic extraction already handled inside extractFeatures
+        }
+      }
     }
   }, []);
 
