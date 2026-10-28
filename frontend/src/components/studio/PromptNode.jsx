@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { Mic, Volume2, Sparkles, Languages, Check, RefreshCw, AudioWaveform, Layers, Square } from 'lucide-react';
+import { Mic, Volume2, Sparkles, Languages, Check, RefreshCw, AudioWaveform, Layers, Square, PenTool, Camera } from 'lucide-react';
 import { startVoiceRecognition, speakText, stopSpeaking, isSpeechRecognitionSupported, isSpeechSynthesisSupported } from '../../utils/speech';
 
 export default function PromptNode({ data }) {
@@ -9,8 +9,10 @@ export default function PromptNode({ data }) {
     onPromptChange,
     language: initialLanguage = 'en-IN',
     onLanguageChange,
-    numCandidates: initialNumCandidates = 3,
+    numCandidates: initialNumCandidates = 4,
     onNumCandidatesChange,
+    imageType: initialImageType = 'sketch',
+    onImageTypeChange,
     onTriggerExtraction,
     isProcessing = false
   } = data || {};
@@ -19,6 +21,7 @@ export default function PromptNode({ data }) {
   const [prompt, setPrompt] = useState(initialPrompt);
   const [language, setLanguage] = useState(initialLanguage);
   const [numCandidates, setNumCandidates] = useState(initialNumCandidates);
+  const [imageType, setImageType] = useState(initialImageType);
 
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -46,6 +49,12 @@ export default function PromptNode({ data }) {
     }
   }, [data?.numCandidates]);
 
+  useEffect(() => {
+    if (data?.imageType !== undefined && data.imageType !== imageType) {
+      setImageType(data.imageType);
+    }
+  }, [data?.imageType]);
+
   const handlePromptChange = (e) => {
     const val = e.target.value;
     setPrompt(val);
@@ -66,6 +75,13 @@ export default function PromptNode({ data }) {
     setNumCandidates(count);
     if (onNumCandidatesChange) {
       onNumCandidatesChange(count);
+    }
+  };
+
+  const handleImageTypeChange = (type) => {
+    setImageType(type);
+    if (onImageTypeChange) {
+      onImageTypeChange(type);
     }
   };
 
@@ -113,7 +129,7 @@ export default function PromptNode({ data }) {
   const handleTrigger = () => {
     if (isProcessing || !prompt.trim()) return;
     if (onTriggerExtraction) {
-      onTriggerExtraction({ prompt, language, numCandidates });
+      onTriggerExtraction({ prompt, language, numCandidates, imageType });
     }
   };
 
@@ -128,12 +144,51 @@ export default function PromptNode({ data }) {
           </h3>
         </div>
         <span className="text-[10px] font-mono text-slate-400 bg-slate-800/80 px-1.5 py-0.5 rounded">
-          MULTILINGUAL
+          STAGE 1 COMPOSITE
         </span>
       </div>
 
       {/* Form Content - Marked nodrag nopan nowheel to prevent canvas event capture */}
       <div className="p-3.5 space-y-3 text-xs nodrag nopan nowheel">
+        {/* Style Selector: Forensic Pencil vs Realistic Portrait */}
+        <div className="space-y-1.5 nodrag">
+          <div className="flex items-center justify-between">
+            <label className="text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
+              <PenTool size={12} className="text-sky-400" />
+              Composite Render Style:
+            </label>
+            <span className="text-[9px] font-mono text-slate-400 uppercase">
+              {imageType === 'sketch' ? 'Pencil' : 'Photo'}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleImageTypeChange('sketch')}
+              className={`nodrag flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
+                imageType === 'sketch'
+                  ? 'bg-sky-500/20 border-sky-400 text-sky-200 shadow-sm shadow-sky-500/20 ring-1 ring-sky-400/30'
+                  : 'bg-navy-950 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600'
+              }`}
+            >
+              <PenTool size={12} />
+              <span>Forensic Pencil</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleImageTypeChange('normal')}
+              className={`nodrag flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
+                imageType === 'normal'
+                  ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-sm shadow-cyan-500/20 ring-1 ring-cyan-400/30'
+                  : 'bg-navy-950 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600'
+              }`}
+            >
+              <Camera size={12} />
+              <span>Realistic Portrait</span>
+            </button>
+          </div>
+        </div>
+
         {/* Language Selection */}
         <div>
           <label className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5 mb-1">
@@ -153,14 +208,19 @@ export default function PromptNode({ data }) {
 
         {/* Prompt Input Area */}
         <div>
-          <label className="text-[11px] font-medium text-slate-400 block mb-1">
-            Witness Descriptive Recall:
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-[11px] font-medium text-slate-300">
+              Witness Descriptive Recall:
+            </label>
+            <span className="text-[10px] font-mono text-slate-500">
+              {prompt.length}/1000
+            </span>
+          </div>
           <textarea
             rows={3}
             value={prompt}
             onChange={handlePromptChange}
-            placeholder="Describe suspect jawline, eyes, nose, facial hair, distinguishing scars..."
+            placeholder="Describe adult facial features: face shape, hair, eyes, eyebrows, nose, mouth, facial hair, skin tone, marks..."
             className="nodrag nowheel w-full bg-navy-950 border border-slate-700 rounded p-2 text-xs text-slate-100 focus:outline-none focus:border-sky-400 resize-none font-sans min-h-[72px]"
           />
         </div>
@@ -175,7 +235,7 @@ export default function PromptNode({ data }) {
               isRecording
                 ? 'bg-rose-950/80 border-rose-500 text-rose-300 animate-pulse'
                 : 'bg-navy-950 hover:bg-slate-800 border-slate-700 text-slate-300'
-            } disabled:opacity-40 disabled:cursor-not-allowed`}
+            } disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer`}
             title={sttSupported ? 'Voice Input' : 'Voice input not supported in this browser'}
           >
             <Mic size={13} className={isRecording ? 'text-rose-400' : 'text-slate-400'} />
@@ -190,7 +250,7 @@ export default function PromptNode({ data }) {
               isSpeaking
                 ? 'bg-sky-950 border-sky-400 text-sky-200'
                 : 'border-slate-700 bg-navy-950 hover:bg-slate-800 text-slate-300'
-            } disabled:opacity-40`}
+            } disabled:opacity-40 cursor-pointer`}
             title={isSpeaking ? 'Stop reading' : 'Read statement aloud'}
           >
             {isSpeaking ? (
@@ -207,15 +267,15 @@ export default function PromptNode({ data }) {
           </button>
         </div>
 
-        {/* Stage 1 Candidate Variations Selector */}
+        {/* Stage 1 Candidate Variations Selector (Default 4x) */}
         <div className="bg-navy-950/80 p-2.5 rounded-lg border border-slate-800 space-y-1.5 nodrag">
           <div className="flex items-center justify-between">
             <label className="text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
               <Layers size={13} className="text-sky-400" />
-              Stage 1 Candidate Variations:
+              Candidate Variations:
             </label>
             <span className="text-[10px] text-sky-400 font-mono font-bold bg-sky-950/90 px-1.5 py-0.5 rounded border border-sky-800/80">
-              {numCandidates} {numCandidates === 1 ? 'Variation' : 'Variations'}
+              {numCandidates} Variations
             </span>
           </div>
           <div className="grid grid-cols-4 gap-1.5">
@@ -224,7 +284,7 @@ export default function PromptNode({ data }) {
                 key={count}
                 type="button"
                 onClick={() => handleNumCandidatesChange(count)}
-                className={`nodrag py-1 text-xs font-mono font-bold rounded border transition-all ${
+                className={`nodrag py-1 text-xs font-mono font-bold rounded border transition-all cursor-pointer ${
                   numCandidates === count
                     ? 'bg-sky-500 text-navy-950 border-sky-400 shadow-md shadow-sky-500/20'
                     : 'bg-navy-950 text-slate-300 border-slate-700 hover:border-slate-500 hover:text-white'
@@ -235,7 +295,7 @@ export default function PromptNode({ data }) {
             ))}
           </div>
           <p className="text-[10px] text-slate-400 leading-tight">
-            Generate {numCandidates} variation{numCandidates > 1 ? 's' : ''} to select the base composite for refinement.
+            Synthesizes {numCandidates} diverse facial variations for witness selection.
           </p>
         </div>
 
@@ -244,7 +304,7 @@ export default function PromptNode({ data }) {
           type="button"
           onClick={handleTrigger}
           disabled={isProcessing || !prompt.trim()}
-          className="nodrag w-full flex items-center justify-center gap-2 py-2 px-3 rounded bg-sky-500 hover:bg-sky-400 text-navy-950 font-bold text-xs shadow-md transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+          className="nodrag w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-sky-500 hover:bg-sky-400 text-navy-950 font-bold text-xs shadow-md transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
         >
           {isProcessing ? (
             <>
@@ -254,7 +314,7 @@ export default function PromptNode({ data }) {
           ) : (
             <>
               <Sparkles size={13} />
-              <span>Extract & Generate ({numCandidates} {numCandidates === 1 ? 'Variation' : 'Variations'})</span>
+              <span>Synthesize {numCandidates} Candidates ({imageType === 'sketch' ? 'Sketch' : 'Photo'})</span>
             </>
           )}
         </button>

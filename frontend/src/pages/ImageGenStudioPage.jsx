@@ -13,6 +13,7 @@ import SessionGalleryDrawer from '../components/studio/SessionGalleryDrawer';
 import PdfExportModal from '../components/studio/PdfExportModal';
 import { useSession } from '../context/SessionContext';
 import { generateCandidates, generateSketch, refineSketch, extractFeatures } from '../services/api';
+import { detectFacialLandmarks, generateFacialRegionMask } from '../utils/maskGenerator';
 import {
   Sparkles,
   GitBranch,
@@ -23,7 +24,12 @@ import {
   RotateCcw,
   Maximize2,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
@@ -43,6 +49,8 @@ function buildGraphFromSession(images, activeFinalized, handlers, promptState) {
       onLanguageChange: promptState.setLanguage,
       numCandidates: promptState.numCandidates,
       onNumCandidatesChange: promptState.setNumCandidates,
+      imageType: promptState.imageType,
+      onImageTypeChange: promptState.setImageType,
       onTriggerExtraction: promptState.onTriggerExtraction,
       isProcessing: promptState.isProcessing
     }
@@ -163,6 +171,8 @@ function rehydrateExistingGraph(existingNodes, existingEdges, images, activeFina
           onLanguageChange: promptState.setLanguage,
           numCandidates: n.data?.numCandidates ?? promptState.numCandidates,
           onNumCandidatesChange: promptState.setNumCandidates,
+          imageType: n.data?.imageType ?? promptState.imageType,
+          onImageTypeChange: promptState.setImageType,
           onTriggerExtraction: promptState.onTriggerExtraction,
           isProcessing: promptState.isProcessing
         }
@@ -267,15 +277,21 @@ export default function ImageGenStudioPage() {
 
   const reactFlowInstance = useRef(null);
 
-  // Prompt, Language and Stage 1 Candidate Variations state
+  // Prompt, Language, Composite Style and Stage 1 Candidate Variations state
   const savedPromptNode = canvasNodes?.find((n) => n.id === 'node-prompt-root');
   const [prompt, setPrompt] = useState(
     savedPromptNode?.data?.prompt ||
     'Male early 30s, sharp square jawline, deep-set almond eyes, straight narrow nose, 3-day stubble, vertical scar above left eyebrow'
   );
   const [language, setLanguage] = useState(savedPromptNode?.data?.language || 'en-IN');
-  const [numCandidates, setNumCandidates] = useState(savedPromptNode?.data?.numCandidates || 3);
+  const [numCandidates, setNumCandidates] = useState(savedPromptNode?.data?.numCandidates || 4);
+  const [imageType, setImageType] = useState(savedPromptNode?.data?.imageType || 'sketch');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isInspectorExpanded, setIsInspectorExpanded] = useState(true);
+  const [activeInspectorRegion, setActiveInspectorRegion] = useState(null);
+  const [apiFallbackActive, setApiFallbackActive] = useState(false);
+  const [apiFallbackReason, setApiFallbackReason] = useState('');
+  const [showMaskPreview, setShowMaskPreview] = useState(false);
 
   // Modals and Drawers
   const [refinementTarget, setRefinementTarget] = useState(null);
@@ -321,6 +337,19 @@ export default function ImageGenStudioPage() {
         nds.map((n) =>
           n.id === 'node-prompt-root'
             ? { ...n, data: { ...n.data, numCandidates: newCount } }
+            : n
+        )
+      );
+    }
+  }, []);
+
+  const handleImageTypeChange = useCallback((newType) => {
+    setImageType(newType);
+    if (setNodesRef.current) {
+      setNodesRef.current((nds) =>
+        nds.map((n) =>
+          n.id === 'node-prompt-root'
+            ? { ...n, data: { ...n.data, imageType: newType } }
             : n
         )
       );
@@ -399,6 +428,8 @@ export default function ImageGenStudioPage() {
       setLanguage: handleLanguageChange,
       numCandidates,
       setNumCandidates: handleNumCandidatesChange,
+      imageType,
+      setImageType: handleImageTypeChange,
       onTriggerExtraction: (overrides) => {
         if (triggerRef.current) triggerRef.current(overrides);
       },
@@ -453,6 +484,7 @@ export default function ImageGenStudioPage() {
     const activePrompt = (overrides?.prompt ?? prompt).trim();
     const activeLanguage = overrides?.language ?? language;
     const activeNumCandidates = overrides?.numCandidates ?? numCandidates;
+    const activeImageType = overrides?.imageType ?? imageType;
 
     if (!activePrompt || isProcessing) return;
     setIsProcessing(true);
@@ -462,11 +494,23 @@ export default function ImageGenStudioPage() {
         prompt: activePrompt,
         language: activeLanguage,
         numCandidates: activeNumCandidates,
+        imageType: activeImageType,
+        caseId: caseNumber,
         iteration: 1
       });
 
       if (!candidates || candidates.length === 0) {
         throw new Error('No candidate sketches generated');
+      }
+
+      const hasMockFallback = candidates.some((c) => c.isMock);
+      setApiFallbackActive(hasMockFallback);
+      if (hasMockFallback) {
+        setApiFallbackReason('Cloudflare Worker API was unreachable or offline. Generated offline mock candidate previews.');
+        addToast('API Fallback Active: Generated offline mock candidate previews.', 'warning');
+      } else {
+        setApiFallbackReason('');
+        addToast(`Successfully synthesized ${candidates.length} live Worker AI candidates.`, 'success');
       }
 
       // Add all candidate variations into session state (first candidate active base by default)
@@ -558,14 +602,15 @@ export default function ImageGenStudioPage() {
 
   triggerRef.current = triggerInitialGeneration;
 
-  // Handle Feature-Specific Refinement
-  const handleRefinementSubmit = async (parentSketch, adjustments, additionalNote) => {
+  // Handle Feature-Specific Refinement with Accurate Image-Sized Mask Inpainting
+  const handleRefinementSubmit = async (parentSketch, adjustments, additionalNote, targetedRegions) => {
     setIsRefining(true);
     try {
       const refined = await refineSketch({
         parentSketch,
         adjustments,
-        promptAdditions: additionalNote
+        promptAdditions: additionalNote,
+        targetRegions: targetedRegions
       });
 
       addSessionSketch(refined);
@@ -708,6 +753,21 @@ export default function ImageGenStudioPage() {
         </div>
       </div>
 
+      {/* API Fallback Notification Banner */}
+      {apiFallbackActive && (
+        <div className="bg-amber-950/90 border-b border-amber-500/50 px-4 py-2 flex items-center justify-between text-xs text-amber-200 z-10 shrink-0">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={15} className="text-amber-400 shrink-0 animate-pulse" />
+            <span>
+              <strong>API Fallback Active:</strong> Cloudflare Worker API was unreachable or offline. Displaying <strong>simulated offline mock candidates</strong>.
+            </span>
+          </div>
+          <span className="text-[10px] font-mono bg-amber-900/80 border border-amber-600/70 px-2 py-0.5 rounded text-amber-300 font-bold uppercase tracking-wider">
+            MOCK DATA MODE
+          </span>
+        </div>
+      )}
+
       {/* Main Flow Canvas Viewport */}
       <div className="flex-1 w-full h-full relative overflow-hidden bg-navy-950">
         <FlowCanvas
@@ -721,22 +781,223 @@ export default function ImageGenStudioPage() {
           }}
         />
 
-        {/* Floating Canvas Controls & Status Overlay */}
-        <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 pointer-events-none">
-          <div className="bg-navy-900/90 border border-slate-800 rounded-lg p-2.5 shadow-xl backdrop-blur-md pointer-events-auto text-xs font-mono space-y-1">
-            <div className="text-[10px] uppercase text-slate-500 font-semibold">
-              Selected Target Composite
-            </div>
-            <div className="text-sky-400 font-bold flex items-center gap-1.5">
-              <span>{finalizedSketch?.imageId || 'None'}</span>
-              <span className="text-[10px] text-emerald-400 font-normal">
-                (v{finalizedSketch?.iteration || 1})
-              </span>
-            </div>
-            <div className="text-[10px] text-slate-400 truncate max-w-[200px]" title={finalizedSketch?.prompt}>
-              {finalizedSketch?.features?.jawline} • {finalizedSketch?.features?.eyes}
-            </div>
-          </div>
+        {/* Prominent Selected Candidate Workspace Dock */}
+        <div className="absolute top-4 right-4 z-20 flex flex-col pointer-events-none max-w-sm w-full">
+          {finalizedSketch && (() => {
+            const dynamicGeometry = detectFacialLandmarks(finalizedSketch);
+            const dynamicLandmarks = [
+              { id: 'hair', label: 'Hair', x: 50, y: Math.round(dynamicGeometry.landmarks.hair.box.minY * 100 + 8) },
+              { id: 'eyebrows', label: 'Eyebrows', x: 50, y: Math.round(((dynamicGeometry.landmarks.eyebrows.box.minY + dynamicGeometry.landmarks.eyebrows.box.maxY) / 2) * 100) },
+              { id: 'eyes', label: 'Eyes', x: 50, y: Math.round(dynamicGeometry.landmarks.eyes.leftEye.y * 100) },
+              { id: 'nose', label: 'Nose', x: 50, y: Math.round(((dynamicGeometry.landmarks.nose.box.minY + dynamicGeometry.landmarks.nose.box.maxY) / 2) * 100) },
+              { id: 'mouth', label: 'Mouth', x: 50, y: Math.round(((dynamicGeometry.landmarks.mouth.box.minY + dynamicGeometry.landmarks.mouth.box.maxY) / 2) * 100) },
+              { id: 'jawline', label: 'Jawline', x: 50, y: Math.round(dynamicGeometry.landmarks.jawline.box.maxY * 100) }
+            ];
+
+            const activeDef = activeInspectorRegion ? dynamicGeometry.landmarks[activeInspectorRegion.toLowerCase()] : null;
+            const maskDataUri = showMaskPreview ? generateFacialRegionMask({
+              width: 512,
+              height: 512,
+              regions: activeInspectorRegion ? [activeInspectorRegion] : ['eyes', 'jawline', 'nose'],
+              candidateMeta: finalizedSketch
+            }) : null;
+
+            return (
+              <div className="bg-navy-900/95 border-2 border-emerald-500/70 rounded-xl shadow-2xl backdrop-blur-md pointer-events-auto overflow-hidden transition-all text-xs">
+                {/* Dock Header */}
+                <div className="bg-navy-950 px-3.5 py-2 border-b border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="font-bold text-white uppercase tracking-wider text-[11px]">
+                      Active Selected Composite
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700 font-bold">
+                      {finalizedSketch.label || finalizedSketch.imageId}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsInspectorExpanded(!isInspectorExpanded)}
+                      className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 cursor-pointer"
+                      title={isInspectorExpanded ? 'Collapse inspector' : 'Expand inspector'}
+                    >
+                      {isInspectorExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                {isInspectorExpanded && (
+                  <div className="p-3 space-y-3">
+                    {/* Provenance Indicator: Live Worker AI vs Fallback Mock */}
+                    <div className="flex items-center justify-between">
+                      {finalizedSketch.isMock ? (
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-950/80 border border-amber-500/70 text-amber-300 text-[10px] font-mono font-bold">
+                          <AlertTriangle size={11} className="text-amber-400" />
+                          <span>MOCK PREVIEW (API FALLBACK)</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/70 text-emerald-300 text-[10px] font-mono font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>WORKER AI COMPOSITE</span>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => setShowMaskPreview(!showMaskPreview)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono border flex items-center gap-1 cursor-pointer transition-colors ${
+                          showMaskPreview
+                            ? 'bg-rose-500/20 border-rose-400 text-rose-300'
+                            : 'bg-navy-950 border-slate-700 text-slate-300 hover:text-white hover:border-slate-500'
+                        }`}
+                      >
+                        {showMaskPreview ? <EyeOff size={11} /> : <Eye size={11} />}
+                        <span>{showMaskPreview ? 'Hide Mask' : 'Inspect 512×512 Mask'}</span>
+                      </button>
+                    </div>
+
+                    {/* Image Preview with Dynamic Facial Landmark Overlays */}
+                    <div className="relative aspect-[4/5] max-h-56 bg-navy-950 rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center">
+                      <img
+                        src={finalizedSketch.imageUrl}
+                        alt={finalizedSketch.imageId}
+                        className="w-full h-full object-contain"
+                      />
+
+                      {/* Real-time Inpainting Mask Overlay */}
+                      {showMaskPreview && maskDataUri && (
+                        <img
+                          src={maskDataUri}
+                          alt="Inpainting Mask Overlay"
+                          className="absolute inset-0 w-full h-full object-contain opacity-70 mix-blend-screen pointer-events-none"
+                        />
+                      )}
+
+                      {/* Dynamic Landmark Overlay Anchors */}
+                      {!showMaskPreview && dynamicLandmarks.map((landmark) => {
+                        const isHighlighted = activeInspectorRegion === landmark.id;
+                        return (
+                          <button
+                            key={landmark.id}
+                            type="button"
+                            onClick={() =>
+                              setActiveInspectorRegion(activeInspectorRegion === landmark.id ? null : landmark.id)
+                            }
+                            className={`absolute -translate-x-1/2 -translate-y-1/2 z-10 transition-all cursor-pointer ${
+                              isHighlighted ? 'scale-125' : 'hover:scale-110 opacity-70 hover:opacity-100'
+                            }`}
+                            style={{ left: `${landmark.x}%`, top: `${landmark.y}%` }}
+                            title={`Target region: ${landmark.label}`}
+                          >
+                            <div
+                              className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${
+                                isHighlighted
+                                  ? 'bg-sky-500 border-white shadow-lg shadow-sky-500/50'
+                                  : 'bg-navy-900 border-sky-400'
+                              }`}
+                            >
+                              <div className="w-1 h-1 rounded-full bg-white" />
+                            </div>
+                          </button>
+                        );
+                      })}
+
+                      {/* Style Badge Overlay */}
+                      <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-navy-950/90 backdrop-blur-sm border border-slate-700 text-[10px] font-mono text-slate-300">
+                        {finalizedSketch.imageType === 'normal' ? 'Realistic Portrait' : 'Forensic Pencil'}
+                      </div>
+
+                      {/* Active Region Target Watermark */}
+                      {activeInspectorRegion && (
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-sky-950/90 border border-sky-500 text-sky-200 text-[9px] font-mono font-bold uppercase">
+                          Targeting: {activeInspectorRegion}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Contour Alignment Feedback */}
+                    <div className="bg-navy-950/80 p-2 rounded border border-slate-800 text-[10px] font-mono text-slate-300 space-y-1">
+                      <div className="flex items-center justify-between text-sky-400 font-bold">
+                        <span>Landmark Contour Segmentation:</span>
+                        <span className="text-emerald-400">Adaptive</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 leading-tight">
+                        {activeDef
+                          ? `Region [${activeInspectorRegion.toUpperCase()}]: ${activeDef.detectedType} (Span: ${(activeDef.box.minX * 100).toFixed(0)}%-${(activeDef.box.maxX * 100).toFixed(0)}% X, ${(activeDef.box.minY * 100).toFixed(0)}%-${(activeDef.box.maxY * 100).toFixed(0)}% Y)`
+                          : `Detected Face Bounds: [${(dynamicGeometry.faceBox.minX * 100).toFixed(0)}%-${(dynamicGeometry.faceBox.maxX * 100).toFixed(0)}% X] conforming to ${finalizedSketch.features?.jawline || 'Sharp Square'} morphology.`}
+                      </div>
+                    </div>
+
+                    {/* Landmark Region Targeting Pills */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
+                        <span>Target Anatomical Region:</span>
+                        <span className="text-emerald-400">512×512 Mask Ready</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1">
+                        {['eyes', 'eyebrows', 'nose', 'mouth', 'jawline', 'hair'].map((region) => (
+                          <button
+                            key={region}
+                            type="button"
+                            onClick={() =>
+                              setActiveInspectorRegion(activeInspectorRegion === region ? null : region)
+                            }
+                            className={`py-1 px-1.5 rounded text-[10px] font-mono uppercase tracking-tight border transition-all cursor-pointer truncate ${
+                              activeInspectorRegion === region
+                                ? 'bg-sky-500/20 border-sky-400 text-sky-200 font-bold'
+                                : 'bg-navy-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            {region}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Anatomical Traits Summary */}
+                    <div className="bg-navy-950/70 p-2 rounded-lg border border-slate-800 text-[11px] font-mono space-y-0.5 text-slate-300">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Case FIR:</span>
+                        <span className="text-slate-200 font-bold">{caseNumber}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Seed / Hash:</span>
+                        <span className="text-sky-300">{finalizedSketch.seed} • {finalizedSketch.imageHash ? finalizedSketch.imageHash.slice(0, 8) : 'SHA256'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Traits:</span>
+                        <span className="text-slate-200 truncate max-w-[150px]">{finalizedSketch.features?.jawline}, {finalizedSketch.features?.eyes}</span>
+                      </div>
+                    </div>
+
+                    {/* Quick Action Buttons */}
+                    <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                      <Button
+                        variant="primary"
+                        size="xs"
+                        onClick={() => handleOpenRefine(finalizedSketch)}
+                        icon={GitBranch}
+                        className="font-bold text-[11px]"
+                      >
+                        Branch & Refine
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="xs"
+                        onClick={() => handleDownloadPng(finalizedSketch)}
+                        icon={FileDown}
+                        className="text-[11px]"
+                      >
+                        Export PNG
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { generateBlockHash, calculateSha256 } from '../utils/hashUtils';
+import { selectCandidateImage, fetchSavedCandidateSelection } from '../services/api';
 
 const SessionContext = createContext();
 
@@ -44,15 +45,44 @@ export function SessionProvider({ children }) {
     interviewDate: '28 Oct 2026'
   });
 
-  // Stored Session-wise image iterations
-  const [sessionImages, setSessionImages] = useState([INITIAL_SKETCH]);
+  // Stored Session-wise image iterations with localStorage persistence across refreshes
+  const [sessionImages, setSessionImages] = useState(() => {
+    try {
+      const saved = localStorage.getItem('forensic_session_images');
+      return saved ? JSON.parse(saved) : [INITIAL_SKETCH];
+    } catch {
+      return [INITIAL_SKETCH];
+    }
+  });
 
   // Selected Finalized Composite for DB verification and high-res export
-  const [finalizedSketch, setFinalizedSketch] = useState(INITIAL_SKETCH);
+  const [finalizedSketch, setFinalizedSketch] = useState(() => {
+    try {
+      const saved = localStorage.getItem('forensic_finalized_sketch');
+      return saved ? JSON.parse(saved) : INITIAL_SKETCH;
+    } catch {
+      return INITIAL_SKETCH;
+    }
+  });
 
-  // Persisted Graph Canvas Nodes & Edges across page navigations
-  const [canvasNodes, setCanvasNodes] = useState(null);
-  const [canvasEdges, setCanvasEdges] = useState(null);
+  // Persisted Graph Canvas Nodes & Edges across page navigations & refreshes
+  const [canvasNodes, setCanvasNodes] = useState(() => {
+    try {
+      const saved = localStorage.getItem('forensic_canvas_nodes');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [canvasEdges, setCanvasEdges] = useState(() => {
+    try {
+      const saved = localStorage.getItem('forensic_canvas_edges');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   // Criminal Database Integrator State: 'SYNTHETIC_DEMO' | 'CUSTOM_IMPORTED'
   const [registryMode, setRegistryMode] = useState(() => {
@@ -221,6 +251,62 @@ export function SessionProvider({ children }) {
     addToast('Cryptographic audit chain restored and re-hashed.', 'success');
   }, [auditLogs, addToast]);
 
+  // Persist session images & finalized sketch to localStorage whenever updated
+  useEffect(() => {
+    try {
+      localStorage.setItem('forensic_session_images', JSON.stringify(sessionImages));
+    } catch {
+      // Ignore quota
+    }
+  }, [sessionImages]);
+
+  useEffect(() => {
+    if (finalizedSketch) {
+      try {
+        localStorage.setItem('forensic_finalized_sketch', JSON.stringify(finalizedSketch));
+      } catch {
+        // Ignore quota
+      }
+    }
+  }, [finalizedSketch]);
+
+  // Sync canvas nodes & edges to localStorage
+  const updateCanvasNodes = useCallback((nodes) => {
+    setCanvasNodes(nodes);
+    try {
+      localStorage.setItem('forensic_canvas_nodes', JSON.stringify(nodes));
+    } catch {}
+  }, []);
+
+  const updateCanvasEdges = useCallback((edges) => {
+    setCanvasEdges(edges);
+    try {
+      localStorage.setItem('forensic_canvas_edges', JSON.stringify(edges));
+    } catch {}
+  }, []);
+
+  // Sync saved candidate selection from backend on mount
+  useEffect(() => {
+    let isSubscribed = true;
+    async function syncBackendSelection() {
+      try {
+        const savedId = await fetchSavedCandidateSelection({ caseId: caseNumber });
+        if (savedId && isSubscribed) {
+          const match = sessionImages.find((img) => img.imageId === savedId);
+          if (match && match.imageId !== finalizedSketch?.imageId) {
+            setFinalizedSketch(match);
+          }
+        }
+      } catch (err) {
+        // Silent fallback
+      }
+    }
+    syncBackendSelection();
+    return () => {
+      isSubscribed = false;
+    };
+  }, [caseNumber]);
+
   // Adds a newly generated or refined sketch to the session
   const addSessionSketch = useCallback((newSketch) => {
     setSessionImages((prev) => [newSketch, ...prev]);
@@ -236,12 +322,17 @@ export function SessionProvider({ children }) {
     }
   }, []);
 
-  // Finalizes the sketch as active base image for refinement, database search & PDF export
+  // Finalizes the sketch as active base image, persists to backend and logs audit event
   const finalizeSketch = useCallback((sketch) => {
     setFinalizedSketch(sketch);
     recordAuditAction('SELECTED_AS_BASE_IMAGE', sketch.imageId, `Selected iteration #${sketch.iteration} as active base composite for refinement`);
     addToast(`Sketch ${sketch.imageId} selected as Base Image for refinement.`, 'success');
-  }, [recordAuditAction, addToast]);
+
+    // Persist selected candidate image through the backend service
+    selectCandidateImage({ caseId: caseNumber, imageId: sketch.imageId }).catch((err) => {
+      console.warn('[SessionContext] Async candidate selection sync notice:', err.message);
+    });
+  }, [recordAuditAction, addToast, caseNumber]);
 
   return (
     <SessionContext.Provider
@@ -263,9 +354,9 @@ export function SessionProvider({ children }) {
         addToast,
         removeToast,
         canvasNodes,
-        setCanvasNodes,
+        setCanvasNodes: updateCanvasNodes,
         canvasEdges,
-        setCanvasEdges,
+        setCanvasEdges: updateCanvasEdges,
         registryMode,
         setRegistryMode,
         customDbRecords,

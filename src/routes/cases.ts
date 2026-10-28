@@ -277,3 +277,104 @@ casesRouter.post('/:caseId/access', async (c) => {
   });
 });
 
+// In-memory fallback map for candidate selections
+const inMemorySelections = new Map<string, string>();
+
+/**
+ * POST /api/cases/:caseId/select-image — Persist selected candidate image for a case
+ */
+casesRouter.post('/:caseId/select-image', async (c) => {
+  const user = c.get('user');
+  const requestId = c.get('requestId');
+  const caseId = c.req.param('caseId');
+  const body = await c.req.json();
+  const imageId = body.imageId;
+
+  if (!imageId) {
+    throw new AppError('imageId is required in select-image payload', 400, 'INVALID_PAYLOAD');
+  }
+
+  inMemorySelections.set(caseId, imageId);
+  const auditService = new AuditService(c.env);
+
+  if (c.env.DB) {
+    try {
+      await c.env.DB.prepare(
+        'UPDATE cases SET active_image_id = ?, updated_at = datetime("now") WHERE id = ?'
+      )
+        .bind(imageId, caseId)
+        .run();
+    } catch (err) {
+      console.warn('[casesRouter] D1 update active_image_id notice:', err);
+    }
+  }
+
+  await auditService.logEvent({
+    caseId,
+    requestId,
+    userId: user.id,
+    userEmail: user.email,
+    userRole: user.role,
+    action: 'CANDIDATE_SELECTED',
+    resourceType: 'image',
+    resourceId: imageId,
+    status: 'SUCCESS',
+    details: {
+      caseId,
+      selectedImageId: imageId
+    }
+  });
+
+  const now = new Date().toISOString();
+  return c.json({
+    ok: true,
+    status: 'success',
+    caseId,
+    selected: true,
+    selectedImageId: imageId,
+    selection: {
+      case_id: caseId,
+      selected_image_id: imageId,
+      selected_at: now
+    },
+    confirmedAt: now
+  });
+});
+
+/**
+ * GET /api/cases/:caseId/selection — Get persisted candidate image selection for a case
+ */
+casesRouter.get('/:caseId/selection', async (c) => {
+  const caseId = c.req.param('caseId');
+
+  let selectedImageId: string | null = inMemorySelections.get(caseId) || null;
+  if (c.env.DB) {
+    try {
+      const row = await c.env.DB.prepare('SELECT active_image_id FROM cases WHERE id = ?')
+        .bind(caseId)
+        .first<{ active_image_id: string }>();
+      if (row?.active_image_id) {
+        selectedImageId = row.active_image_id;
+      }
+    } catch (err) {
+      console.warn('[casesRouter] D1 query selection notice:', err);
+    }
+  }
+
+  return c.json({
+    ok: true,
+    status: 'success',
+    caseId,
+    selected: Boolean(selectedImageId),
+    selectedImageId,
+    selection: selectedImageId
+      ? {
+          case_id: caseId,
+          selected_image_id: selectedImageId,
+          selected_at: new Date().toISOString()
+        }
+      : null
+  });
+});
+
+

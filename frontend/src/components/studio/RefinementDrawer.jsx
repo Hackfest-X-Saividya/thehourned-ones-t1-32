@@ -20,6 +20,7 @@ export default function RefinementDrawer({
   const [facialHair, setFacialHair] = useState(parentSketch.features?.facialHair || '3-Day Heavy Stubble');
   const [marks, setMarks] = useState(parentSketch.features?.marks || 'Scar on Left Eyebrow');
   const [additionalNote, setAdditionalNote] = useState('');
+  const [targetedRegions, setTargetedRegions] = useState(['jawline', 'eyes', 'nose']);
 
   const [isRecording, setIsRecording] = useState(false);
   const [recognitionController, setRecognitionController] = useState(null);
@@ -41,9 +42,16 @@ export default function RefinementDrawer({
       setFacialHair(parentSketch.features?.facialHair || '3-Day Heavy Stubble');
       setMarks(parentSketch.features?.marks || 'Scar on Left Eyebrow');
       setAdditionalNote('');
+      setTargetedRegions(['jawline', 'eyes']);
       setIsRecording(false);
     }
   }, [parentSketch]);
+
+  const toggleRegion = (region) => {
+    setTargetedRegions((prev) =>
+      prev.includes(region) ? prev.filter((r) => r !== region) : [...prev, region]
+    );
+  };
 
   const handleToggleVoice = () => {
     if (isRecording) {
@@ -80,7 +88,7 @@ export default function RefinementDrawer({
       marks
     };
     if (onSubmitRefinement) {
-      onSubmitRefinement(parentSketch, adjustments, additionalNote);
+      onSubmitRefinement(parentSketch, adjustments, additionalNote, targetedRegions);
     }
   };
 
@@ -99,16 +107,58 @@ export default function RefinementDrawer({
             alt={parentSketch.imageId}
             className="w-16 h-16 rounded object-cover border border-slate-700 shrink-0"
           />
-          <div>
-            <div className="font-mono text-sky-400 font-bold flex items-center gap-1.5">
+          <div className="flex-1 min-w-0">
+            <div className="font-mono text-sky-400 font-bold flex items-center gap-1.5 flex-wrap">
               <span>Parent Node: {parentSketch.imageId}</span>
               <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.2 rounded">
                 v{parentSketch.iteration || 1}
+              </span>
+              <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-700 px-1.5 py-0.2 rounded">
+                512×512 Mask Active
               </span>
             </div>
             <div className="text-[11px] text-slate-400 line-clamp-2 mt-1">
               "{parentSketch.prompt}"
             </div>
+          </div>
+        </div>
+
+        {/* Anatomical Landmark Regions Inpainting Targeting */}
+        <div className="bg-navy-950/70 p-2.5 rounded-lg border border-slate-800 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label className="text-[11px] font-semibold text-slate-300">
+              Targeted Inpainting Mask Regions:
+            </label>
+            <span className="text-[9px] font-mono text-emerald-400">
+              Accurate Image-Sized Raster Mask
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { id: 'jawline', label: 'Jawline' },
+              { id: 'eyes', label: 'Eyes' },
+              { id: 'eyebrows', label: 'Eyebrows' },
+              { id: 'nose', label: 'Nose' },
+              { id: 'mouth', label: 'Mouth / Lips' },
+              { id: 'facialHair', label: 'Facial Hair' },
+              { id: 'marks', label: 'Marks & Scars' }
+            ].map((reg) => {
+              const isSelected = targetedRegions.includes(reg.id);
+              return (
+                <button
+                  key={reg.id}
+                  type="button"
+                  onClick={() => toggleRegion(reg.id)}
+                  className={`px-2 py-1 rounded text-[10px] font-mono border transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-sky-500/20 border-sky-400 text-sky-200 font-bold'
+                      : 'bg-navy-950 border-slate-850 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {isSelected ? `✓ ${reg.label}` : reg.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 

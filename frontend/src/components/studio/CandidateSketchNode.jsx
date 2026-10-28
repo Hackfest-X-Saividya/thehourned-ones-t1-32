@@ -7,7 +7,8 @@ import {
   Download,
   ShieldCheck,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  AlertTriangle
 } from 'lucide-react';
 
 export default function CandidateSketchNode({ data }) {
@@ -26,8 +27,10 @@ export default function CandidateSketchNode({ data }) {
     <div
       className={`w-72 bg-navy-900 rounded-xl shadow-2xl overflow-hidden backdrop-blur-md transition-all ${
         isFinalized
-          ? 'border-2 border-emerald-400 ring-2 ring-emerald-500/20 shadow-emerald-950/50'
-          : 'border border-slate-700/80 hover:border-sky-500/60'
+          ? 'border-2 border-emerald-400 ring-4 ring-emerald-500/30 shadow-2xl shadow-emerald-500/20'
+          : sketch.isMock
+            ? 'border border-amber-600/60 hover:border-amber-400/80'
+            : 'border border-slate-700/80 hover:border-sky-500/60'
       }`}
     >
       {/* Target Handle from Extractor or Parent Sketch */}
@@ -39,25 +42,39 @@ export default function CandidateSketchNode({ data }) {
       />
 
       {/* Node Header */}
-      <div className="bg-navy-950/90 px-3 py-2 border-b border-slate-800 flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold text-white font-mono">
-            {sketch.imageId}
+      <div className={`px-3 py-2 border-b flex items-center justify-between ${isFinalized ? 'bg-emerald-950/80 border-emerald-700/80' : sketch.isMock ? 'bg-amber-950/40 border-amber-900/50' : 'bg-navy-950/90 border-slate-800'}`}>
+        <div className="flex items-center gap-1.5 truncate pr-1">
+          <span className="text-xs font-bold text-white font-mono truncate">
+            {sketch.label || sketch.imageId}
           </span>
-          <span className="text-[10px] font-mono px-1.5 py-0.2 bg-sky-950 text-sky-300 border border-sky-800 rounded">
+          <span className="text-[10px] font-mono px-1.5 py-0.2 bg-sky-950 text-sky-300 border border-sky-800 rounded shrink-0">
             v{sketch.iteration || 1}
           </span>
         </div>
 
-        {isFinalized ? (
-          <span className="text-[10px] font-mono font-bold text-emerald-400 flex items-center gap-1 bg-emerald-950/90 border border-emerald-700 px-1.5 py-0.5 rounded shadow-sm">
-            <CheckCircle2 size={11} /> BASE IMAGE
-          </span>
-        ) : (
-          <span className="text-[10px] font-mono text-slate-400">
-            Seed: {sketch.seed}
-          </span>
-        )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {sketch.isMock ? (
+            <span
+              className="text-[9px] font-mono font-bold text-amber-300 flex items-center gap-1 bg-amber-950/90 border border-amber-500/70 px-1.5 py-0.5 rounded shadow"
+              title={sketch.mockReason || 'Simulated SVG Preview (Worker API Fallback)'}
+            >
+              <AlertTriangle size={10} className="text-amber-400" /> MOCK DATA
+            </span>
+          ) : (
+            <span
+              className="text-[9px] font-mono font-bold text-emerald-300 flex items-center gap-1 bg-emerald-950/90 border border-emerald-500/70 px-1.5 py-0.5 rounded shadow"
+              title="Cloudflare Worker AI Composite"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> WORKER AI
+            </span>
+          )}
+
+          {isFinalized && (
+            <span className="text-[10px] font-mono font-bold text-emerald-300 flex items-center gap-1 bg-emerald-900/90 border border-emerald-500 px-1.5 py-0.5 rounded shadow">
+              <CheckCircle2 size={11} className="stroke-[2.5]" /> SELECTED
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Sketch Image Display */}
@@ -69,8 +86,22 @@ export default function CandidateSketchNode({ data }) {
         />
         <div className="absolute bottom-2 left-2 right-2 bg-navy-950/90 backdrop-blur-sm px-2 py-1 rounded border border-slate-800/80 flex items-center justify-between text-[10px] font-mono text-slate-300">
           <span>{sketch.parentId ? `Parent: ${sketch.parentId}` : 'Stage 1 Candidate'}</span>
-          <span className="text-sky-400">Charcoal Style</span>
+          <span className={sketch.imageType === 'normal' ? 'text-cyan-300 font-medium' : 'text-sky-300 font-medium'}>
+            {sketch.imageType === 'normal' ? 'Realistic Portrait' : 'Pencil Sketch'}
+          </span>
         </div>
+
+        {isFinalized && (
+          <div className="absolute top-2 left-2 bg-emerald-950/90 backdrop-blur-sm border border-emerald-500/60 text-emerald-200 text-[9px] font-mono px-1.5 py-0.5 rounded font-bold shadow">
+            ACTIVE TARGET
+          </div>
+        )}
+
+        {sketch.isMock && (
+          <div className="absolute top-2 right-2 bg-amber-950/90 backdrop-blur-sm border border-amber-500/70 text-amber-200 text-[9px] font-mono px-1.5 py-0.5 rounded font-bold shadow flex items-center gap-1">
+            <AlertTriangle size={9} className="text-amber-400" /> FALLBACK
+          </div>
+        )}
       </div>
 
       {/* Node Info & Change summary */}
@@ -87,6 +118,11 @@ export default function CandidateSketchNode({ data }) {
           <span className="bg-navy-950 px-1.5 py-0.5 rounded border border-slate-800">
             {sketch.features?.eyes || 'Eyes: Std'}
           </span>
+          {sketch.confidenceScore && (
+            <span className="bg-navy-950 text-emerald-400 px-1.5 py-0.5 rounded border border-slate-800 font-bold">
+              {sketch.confidenceScore}% conf
+            </span>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -95,13 +131,13 @@ export default function CandidateSketchNode({ data }) {
           <button
             type="button"
             onClick={() => onFinalize && onFinalize(sketch)}
-            className={`w-full py-1.5 px-2 rounded text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+            className={`w-full py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
               isFinalized
-                ? 'bg-emerald-500/20 border border-emerald-500 text-emerald-300 shadow-sm cursor-default'
-                : 'bg-emerald-500 hover:bg-emerald-400 text-navy-950 shadow-sm hover:shadow'
+                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 font-extrabold cursor-default'
+                : 'bg-navy-800 hover:bg-slate-700 text-slate-100 border border-slate-700 hover:border-slate-500'
             }`}
           >
-            <CheckCircle2 size={12} />
+            <CheckCircle2 size={12} className={isFinalized ? 'stroke-[2.5]' : ''} />
             <span>{isFinalized ? 'Active Base' : 'Select as Base'}</span>
           </button>
 
@@ -109,7 +145,7 @@ export default function CandidateSketchNode({ data }) {
           <button
             type="button"
             onClick={() => onRefine && onRefine(sketch)}
-            className="w-full py-1.5 px-2 rounded bg-navy-950 hover:bg-slate-800 border border-slate-700 text-slate-200 text-[11px] font-medium flex items-center justify-center gap-1 transition-all"
+            className="w-full py-1.5 px-2 rounded-lg bg-navy-950 hover:bg-slate-800 border border-slate-700 text-slate-200 text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer"
           >
             <GitBranch size={12} className="text-sky-400" />
             <span>Refine</span>
