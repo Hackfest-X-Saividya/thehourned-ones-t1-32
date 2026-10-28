@@ -12,7 +12,7 @@ import {
   Sliders
 } from 'lucide-react';
 import Badge from '../common/Badge';
-import { getMugshotFallback } from '../../services/mockCriminalDb';
+import { getEvaluatedSketchForRecord } from '../../services/evaluatedSketches';
 
 /**
  * Circular SVG Radial Progress Gauge for overall combined match percentage.
@@ -81,6 +81,7 @@ export default function CriminalMatchCard({ suspect, queryFeatures, onInspectCom
   ];
 
   const matchedCount = suspect.matchedTraits?.length || 0;
+  const recordSketch = getEvaluatedSketchForRecord(suspect);
 
   return (
     <div
@@ -93,19 +94,19 @@ export default function CriminalMatchCard({ suspect, queryFeatures, onInspectCom
       }`}
     >
       <div className="flex flex-col md:flex-row gap-4 items-start">
-        {/* Mugshot Image Container with Forensic Framing */}
-        <div className="relative shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-lg overflow-hidden border border-slate-700 bg-navy-950 shadow-md">
+        {/* Locally bundled synthetic graphite sketch for the evaluated record */}
+        <div className="relative shrink-0 w-28 h-36 sm:w-32 sm:h-40 rounded-lg overflow-hidden border border-slate-700 bg-stone-100 shadow-md">
           <img
-            src={suspect.mugshotUrl}
-            alt={suspect.fullName}
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = getMugshotFallback(suspect.gender, suspect.suspectId);
-            }}
-            className="w-full h-full object-cover"
+            src={recordSketch.src}
+            alt={`Synthetic forensic-style reference sketch ${recordSketch.id}`}
+            className="w-full h-full object-contain"
+            loading="lazy"
           />
-          <span className="absolute bottom-1.5 left-1.5 bg-navy-950/90 backdrop-blur-sm text-[9px] font-mono text-slate-300 px-1.5 py-0.5 rounded border border-slate-800">
-            {suspect.gender}, {suspect.age}y
+          <span className="absolute top-1 left-1 bg-slate-950/90 text-[8px] font-mono text-slate-200 px-1.5 py-0.5 rounded border border-slate-700">
+            DEMO SKETCH
+          </span>
+          <span className="absolute bottom-1 left-1 bg-slate-950/90 text-[8px] font-mono text-slate-200 px-1.5 py-0.5 rounded border border-slate-700">
+            {recordSketch.id}
           </span>
         </div>
 

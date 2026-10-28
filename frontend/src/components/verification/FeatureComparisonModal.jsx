@@ -2,7 +2,7 @@ import React from 'react';
 import Modal from '../common/Modal';
 import Badge from '../common/Badge';
 import { ArrowRightLeft, CheckCircle2, XCircle, AlertTriangle, ShieldCheck } from 'lucide-react';
-import { getMugshotFallback } from '../../services/mockCriminalDb';
+import { getEvaluatedSketchForRecord } from '../../services/evaluatedSketches';
 
 export default function FeatureComparisonModal({
   isOpen,
@@ -11,6 +11,8 @@ export default function FeatureComparisonModal({
   suspectRecord
 }) {
   if (!finalizedSketch || !suspectRecord) return null;
+
+  const recordSketch = getEvaluatedSketchForRecord(suspectRecord);
 
   const featureKeys = [
     { key: 'faceShape', label: 'Face Shape / Contour' },
@@ -34,10 +36,10 @@ export default function FeatureComparisonModal({
         <div className="p-3 rounded-lg bg-amber-950/40 border border-amber-800/80 text-[11px] text-amber-200 flex items-start gap-2.5">
           <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
           <div>
-            <strong>SYNTHETIC DEMONSTRATION RECORD:</strong> This criminal profile, mugshot, FIR
-            number, and similarity score are synthetic demonstration data for hackathon evaluation.
-            Similarity scores assist investigative leads and do not constitute legal proof of
-            identity or criminality.
+            <strong>SYNTHETIC DEMONSTRATION RECORD:</strong> The profile and similarity score are
+            mock data. The graphite sketch shown for this record is a locally bundled synthetic
+            placeholder, not a verified image of the record subject. Similarity scores are for UI
+            testing only and do not establish identity or criminality.
           </div>
         </div>
 
@@ -70,15 +72,17 @@ export default function FeatureComparisonModal({
                 {suspectRecord.firNumber}
               </span>
             </div>
-            <img
-              src={suspectRecord.mugshotUrl}
-              alt={suspectRecord.fullName}
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = getMugshotFallback(suspectRecord.gender, suspectRecord.suspectId);
-              }}
-              className="w-full h-56 object-cover rounded-lg border border-slate-700 bg-navy-950"
-            />
+            <div className="relative rounded-lg border border-slate-700 bg-stone-100 overflow-hidden">
+              <img
+                src={recordSketch.src}
+                alt={`Synthetic graphite reference sketch ${recordSketch.id}`}
+                className="w-full h-56 object-contain"
+                loading="lazy"
+              />
+              <span className="absolute bottom-2 left-2 text-[10px] font-mono bg-slate-950/90 text-slate-200 border border-slate-700 rounded px-2 py-1">
+                SYNTHETIC REFERENCE · {recordSketch.id}
+              </span>
+            </div>
           </div>
         </div>
 

@@ -73,6 +73,7 @@ export interface ImageMetadata {
   createdAt: string;
   imageUrl?: string;
   maskUrl?: string;
+  previewDataUri?: string;
 }
 
 export type AuditAction =
@@ -136,4 +137,3 @@ export interface HonoVariables {
   user: AuthenticatedUser;
   requestId: string;
 }
-

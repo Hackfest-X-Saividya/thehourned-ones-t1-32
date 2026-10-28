@@ -8,7 +8,7 @@ CLOUDFLARE_WORKER_TOKEN=your-deployed-worker-api-token-here
 
 ENVIRONMENT=development
 MOCK_AI=true
-JWT_SECRET=crime-sketch-forensic-secret-key-2026
+JWT_SECRET=replace-with-a-random-secret
 MAX_FILE_SIZE_BYTES=10485760
 DEFAULT_IMAGE_WIDTH=1024
 DEFAULT_IMAGE_HEIGHT=1024
