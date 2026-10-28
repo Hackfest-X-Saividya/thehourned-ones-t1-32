@@ -8,17 +8,17 @@ export default function Toast() {
   if (!toasts || toasts.length === 0) return null;
 
   const icons = {
-    success: <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />,
-    warning: <AlertTriangle size={16} className="text-amber-400 shrink-0" />,
-    danger: <AlertCircle size={16} className="text-rose-400 shrink-0" />,
-    info: <Info size={16} className="text-sky-400 shrink-0" />
+    success: <CheckCircle2 size={16} className="text-[#34D399] shrink-0" />,
+    warning: <AlertTriangle size={16} className="text-[#FBBF24] shrink-0" />,
+    danger: <AlertCircle size={16} className="text-[#F87171] shrink-0" />,
+    info: <Info size={16} className="text-[#60A5FA] shrink-0" />
   };
 
   const borders = {
-    success: 'border-emerald-500/50 bg-emerald-950/90 text-emerald-100',
-    warning: 'border-amber-500/50 bg-amber-950/90 text-amber-100',
-    danger: 'border-rose-500/50 bg-rose-950/90 text-rose-100',
-    info: 'border-sky-500/50 bg-navy-900/95 text-slate-100'
+    success: 'border-[#34D399]/40 bg-[#111B2B]/95 text-[#E5EDF7] shadow-lg shadow-black/40',
+    warning: 'border-[#FBBF24]/40 bg-[#111B2B]/95 text-[#E5EDF7] shadow-lg shadow-black/40',
+    danger: 'border-[#F87171]/40 bg-[#111B2B]/95 text-[#E5EDF7] shadow-lg shadow-black/40',
+    info: 'border-[#29374B] bg-[#111B2B]/95 text-[#E5EDF7] shadow-lg shadow-black/40'
   };
 
   return (
@@ -45,3 +45,4 @@ export default function Toast() {
     </div>
   );
 }
+

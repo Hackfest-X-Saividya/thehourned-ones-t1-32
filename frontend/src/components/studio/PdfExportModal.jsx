@@ -51,43 +51,43 @@ export default function PdfExportModal({ isOpen, onClose }) {
       maxWidth="max-w-lg"
     >
       <div className="space-y-4 text-xs">
-        <div className="flex gap-4 p-3 bg-navy-950 rounded-lg border border-slate-800">
+        <div className="flex gap-4 p-3 bg-[#0B1120] rounded-lg border border-[#29374B]">
           <img
             src={finalizedSketch.imageUrl}
             alt={finalizedSketch.imageId}
-            className="w-24 h-24 rounded object-cover border border-slate-700"
+            className="w-24 h-24 rounded object-cover border border-[#29374B]"
           />
           <div className="space-y-1">
-            <div className="font-mono text-sky-400 font-bold">{caseNumber}</div>
-            <div className="text-[11px] text-slate-300">
-              Composite Target: <strong className="font-mono">{finalizedSketch.imageId}</strong> (v{finalizedSketch.iteration})
+            <div className="font-mono text-[#60A5FA] font-bold">{caseNumber}</div>
+            <div className="text-[11px] text-[#A2B1C5]">
+              Composite Target: <strong className="font-mono text-[#E5EDF7]">{finalizedSketch.imageId}</strong> (v{finalizedSketch.iteration})
             </div>
-            <div className="text-[10px] text-slate-400 font-mono">
+            <div className="text-[10px] text-[#77879D] font-mono">
               Officer: {officer.name} [{officer.id}]
             </div>
-            <div className="text-[10px] text-emerald-400 font-mono">
+            <div className="text-[10px] text-[#2DD4BF] font-mono">
               SHA-256 Ledger: Chained & Signed
             </div>
           </div>
         </div>
 
         <div>
-          <label className="block text-[11px] font-medium text-slate-300 mb-1">
+          <label className="block text-[11px] font-medium text-[#A2B1C5] mb-1">
             Investigating Officer Case Notes & Chain of Custody Addendum:
           </label>
           <textarea
             rows={3}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="w-full bg-navy-950 border border-slate-700 rounded p-2 text-xs text-slate-100 resize-none font-sans"
+            className="w-full bg-[#0B1120] border border-[#29374B] rounded p-2 text-xs text-[#E5EDF7] placeholder:text-[#77879D] focus:outline-none focus:border-[#60A5FA] resize-none font-sans"
           />
         </div>
 
-        <div className="p-2.5 rounded bg-amber-950/40 border border-amber-800/60 text-[10px] text-amber-200">
-          <strong>LEGAL NOTICE:</strong> The resulting dossier includes cryptographic SHA-256 signatures, anatomical attribute breakdowns, and non-conclusive investigative aid disclaimers in accordance with forensic reporting guidelines.
+        <div className="p-2.5 rounded bg-amber-950/30 border border-amber-800/50 text-[10px] text-[#FBBF24]">
+          <strong className="font-semibold text-[#FBBF24]">Legal Notice:</strong> The resulting dossier includes cryptographic SHA-256 signatures, anatomical attribute breakdowns, and non-conclusive investigative aid disclaimers in accordance with forensic reporting guidelines.
         </div>
 
-        <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+        <div className="flex justify-end gap-2 pt-2 border-t border-[#29374B]">
           <Button variant="outline" onClick={onClose} disabled={isExporting}>
             Cancel
           </Button>
@@ -104,3 +104,4 @@ export default function PdfExportModal({ isOpen, onClose }) {
     </Modal>
   );
 }
+

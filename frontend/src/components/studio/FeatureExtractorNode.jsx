@@ -27,33 +27,33 @@ export default function FeatureExtractorNode({ data }) {
   ];
 
   return (
-    <div className="w-80 bg-navy-900 border-2 border-emerald-500/70 rounded-xl shadow-2xl overflow-hidden backdrop-blur-md">
+    <div className="w-80 bg-[#111B2B] border border-[#29374B] hover:border-[#2DD4BF]/60 rounded-xl shadow-2xl overflow-hidden backdrop-blur-md transition-colors">
       {/* Input Handle from PromptNode */}
       <Handle
         type="target"
         position={Position.Left}
         id="feature-in"
-        className="!w-3 !h-3 !bg-emerald-400 !border-2 !border-navy-950"
+        className="!w-3 !h-3 !bg-[#2DD4BF] !border-2 !border-[#0B1120]"
       />
 
       {/* Node Header */}
-      <div className="bg-navy-950/90 px-3.5 py-2.5 border-b border-slate-800 flex items-center justify-between">
+      <div className="bg-[#0B1120]/80 px-3.5 py-2.5 border-b border-[#29374B] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <ShieldCheck size={14} className="text-emerald-400" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-300">
+          <ShieldCheck size={14} className="text-[#2DD4BF]" />
+          <h3 className="text-xs font-semibold tracking-wide text-[#2DD4BF]">
             Node 2: Feature Extractor
           </h3>
         </div>
-        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-1.5 py-0.5 rounded flex items-center gap-1">
+        <span className="text-[10px] font-mono text-[#2DD4BF] bg-teal-950/60 border border-teal-800/60 px-1.5 py-0.5 rounded flex items-center gap-1">
           <CheckCircle2 size={10} />
           {confidence}% CONF.
         </span>
       </div>
 
       <div className="p-3.5 space-y-2.5 text-xs">
-        <div className="text-[10px] font-mono text-slate-400 flex items-center justify-between pb-1 border-b border-slate-800">
+        <div className="text-[10px] font-mono text-[#77879D] flex items-center justify-between pb-1 border-b border-[#29374B]">
           <span>PARSED ANATOMICAL ATTRIBUTES</span>
-          <span className="text-emerald-400">GUARDRAIL VERIFIED</span>
+          <span className="text-[#2DD4BF]">GUARDRAIL VERIFIED</span>
         </div>
 
         {/* Feature Grid */}
@@ -61,22 +61,22 @@ export default function FeatureExtractorNode({ data }) {
           {featureItems.map((item) => (
             <div
               key={item.label}
-              className="bg-navy-950/90 border border-slate-800 rounded p-1.5 text-[11px]"
+              className="bg-[#0B1120] border border-[#29374B] rounded p-2 text-[11px]"
             >
-              <div className="text-[10px] text-slate-400 font-mono">{item.label}</div>
-              <div className="text-slate-100 font-semibold truncate" title={item.value}>
+              <div className="text-[10px] text-[#77879D] font-mono">{item.label}</div>
+              <div className="text-[#E5EDF7] font-semibold truncate" title={item.value}>
                 {item.value}
               </div>
             </div>
           ))}
         </div>
 
-        <div className="bg-slate-950/70 rounded p-2 border border-slate-800/80 text-[10px] font-mono text-slate-400 flex items-center justify-between">
+        <div className="bg-[#172337] rounded p-2 border border-[#29374B] text-[10px] font-mono text-[#A2B1C5] flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <Cpu size={12} className="text-emerald-400" />
+            <Cpu size={12} className="text-[#2DD4BF]" />
             <span>Cloudflare AI Worker Pipeline</span>
           </div>
-          <span className="text-emerald-300">READY</span>
+          <span className="text-[#2DD4BF]">READY</span>
         </div>
       </div>
 
@@ -85,8 +85,9 @@ export default function FeatureExtractorNode({ data }) {
         type="source"
         position={Position.Right}
         id="feature-out"
-        className="!w-3 !h-3 !bg-emerald-400 !border-2 !border-navy-950"
+        className="!w-3 !h-3 !bg-[#2DD4BF] !border-2 !border-[#0B1120]"
       />
     </div>
   );
 }
+

@@ -236,3 +236,4 @@ export async function exportForensicDossierPDF({
   // Save PDF
   doc.save(`Forensic_Dossier_${caseNumber}_${sessionId}.pdf`);
 }
+

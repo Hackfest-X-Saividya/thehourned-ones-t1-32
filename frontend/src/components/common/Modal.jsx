@@ -26,16 +26,16 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
         aria-hidden="true"
       />
       <div
-        className={`relative w-full ${maxWidth} bg-navy-900 border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden z-10 animate-scaleUp`}
+        className={`relative w-full ${maxWidth} bg-[#111B2B] border border-[#29374B] rounded-xl shadow-2xl overflow-hidden z-10 animate-scaleUp`}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-navy-950/60">
-          <h2 className="text-sm font-semibold tracking-wide uppercase text-slate-100 flex items-center gap-2">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#29374B] bg-[#0B1120]/70">
+          <h2 className="text-sm font-semibold tracking-wide text-[#E5EDF7] flex items-center gap-2">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-[#A2B1C5] hover:text-[#E5EDF7] hover:bg-[#172337] transition-colors"
             aria-label="Close modal"
           >
             <X size={18} />
@@ -50,3 +50,4 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
     </div>
   );
 }
+

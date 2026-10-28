@@ -23,6 +23,7 @@ import {
   RotateCcw,
   Maximize2,
   CheckCircle2,
+  Crosshair,
   AlertCircle
 } from 'lucide-react';
 import Button from '../components/common/Button';
@@ -257,6 +258,14 @@ export default function ImageGenStudioPage() {
     addSessionSketches,
     finalizedSketch,
     finalizeSketch,
+    flowNodes,
+    setFlowNodes,
+    flowEdges,
+    setFlowEdges,
+    witnessPrompt,
+    setWitnessPrompt,
+    witnessLanguage,
+    setWitnessLanguage,
     recordAuditAction,
     addToast,
     canvasNodes,
@@ -516,7 +525,7 @@ export default function ImageGenStudioPage() {
       });
 
       const nextNodes = nodes
-        .map((n) => {
+.map((n) => {
           if (n.id === 'node-extractor-root') {
             return {
               ...n,
@@ -558,7 +567,7 @@ export default function ImageGenStudioPage() {
 
   triggerRef.current = triggerInitialGeneration;
 
-  // Handle Feature-Specific Refinement
+  // Handle Feature-Specific Refinement (branching child node)
   const handleRefinementSubmit = async (parentSketch, adjustments, additionalNote) => {
     setIsRefining(true);
     try {
@@ -589,7 +598,7 @@ export default function ImageGenStudioPage() {
         type: 'candidateSketchNode',
         position: {
           x: parentPos.x + 360,
-          y: parentPos.y + existingChildren.length * 370
+y: parentPos.y + existingChildren.length * 370
         },
         data: {
           sketch: refined,
@@ -608,7 +617,7 @@ export default function ImageGenStudioPage() {
         target: childNodeId,
         targetHandle: `sketch-in-${refined.imageId}`,
         animated: true,
-        style: { stroke: '#10B981', strokeWidth: 2.5 }
+        style: { stroke: '#2DD4BF', strokeWidth: 2.5 }
       };
 
       const nextNodes = nodes
@@ -631,7 +640,10 @@ export default function ImageGenStudioPage() {
       if (setCanvasEdges) setCanvasEdges(nextEdges);
 
       setRefinementTarget(null);
-      addToast(`Branched refinement node v${refined.iteration} (${refined.imageId}) created!`, 'success');
+      addToast(
+        `Branched refinement node v${refined.iteration} (${refined.imageId}) created!`,
+        'success'
+      );
     } catch (err) {
       console.error(err);
       addToast('Refinement failed. Please try again.', 'danger');
@@ -640,26 +652,111 @@ export default function ImageGenStudioPage() {
     }
   };
 
-  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
+
+  // Focus a specific composite node on the canvas when selected from Gallery
+  const handleFocusNodeOnCanvas = useCallback(
+    (sketch) => {
+      let targetNode = nodes.find((n) => n.data?.sketch?.imageId === sketch.imageId);
+
+      if (!targetNode) {
+        // If node was absent, instantiate it onto canvas
+        const restoredNodeId = `node-sketch-${sketch.seed || sketch.imageId}`;
+        const candidateCount = nodes.filter((n) => n.type === 'candidateSketchNode').length;
+
+        const newNode = {
+          id: restoredNodeId,
+          type: 'candidateSketchNode',
+          position: { x: 780, y: candidateCount * 360 + 60 },
+          data: {
+            sketch,
+            isFinalized: finalizedSketch?.imageId === sketch.imageId,
+            onFinalize: handleFinalizeSketch,
+            onRefine: handleOpenRefine,
+            onCompare: handleOpenCompare,
+            onDownloadPng: handleDownloadPng
+          }
+        };
+
+        const newEdge = {
+          id: `edge-extractor-${restoredNodeId}`,
+          source: 'node-extractor-root',
+          sourceHandle: 'feature-out',
+          target: restoredNodeId,
+          targetHandle: 'sketch-in',
+          animated: true,
+          style: { stroke: '#60A5FA', strokeWidth: 2 }
+        };
+
+        targetNode = newNode;
+        setNodes((nds) => [...nds, newNode]);
+        setEdges((eds) => [...eds, newEdge]);
+        setFlowNodes((nds) => [...nds, newNode]);
+        setFlowEdges((eds) => [...eds, newEdge]);
+      }
+
+      // Smooth pan and center on this node
+      if (reactFlowInstance.current && targetNode) {
+        reactFlowInstance.current.setCenter(
+          targetNode.position.x + 140,
+          targetNode.position.y + 140,
+          { zoom: 1.05, duration: 600 }
+        );
+      }
+
+      setIsGalleryOpen(false);
+      addToast(`Centered on composite node ${sketch.imageId} (v${sketch.iteration}) on canvas`, 'info');
+    },
+    [
+      nodes,
+      finalizedSketch,
+      handleFinalizeSketch,
+      handleOpenRefine,
+      handleOpenCompare,
+      handleDownloadPng,
+      setFlowNodes,
+      setFlowEdges,
+      addToast
+    ]
+  );
+
+  const onConnect = useCallback(
+    (params) => setEdges((eds) => addEdge(params, eds)),
+    [setEdges]
+  );
+
 
   return (
     <div className="flex flex-col h-[calc(100vh-6.5rem)]">
       {/* Studio Header Action Bar */}
-      <div className="bg-navy-950/90 border-b border-slate-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+      <div className="bg-[#111B2B]/95 border-b border-[#29374B] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-sky-400 animate-pulse" />
-            <h1 className="text-xs font-bold uppercase tracking-wider text-white">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#60A5FA] animate-pulse" />
+            <h1 className="text-xs font-semibold tracking-wide text-[#E5EDF7]">
               Forensic Graph Canvas
             </h1>
           </div>
-          <span className="text-[11px] font-mono text-slate-400 bg-navy-900 border border-slate-855 px-2 py-0.5 rounded">
+<span className="text-[11px] font-mono text-[#A2B1C5] bg-[#172337] border border-[#29374B] px-2 py-0.5 rounded">
             {nodes.filter((n) => n.type === 'candidateSketchNode').length} Composite Nodes Active
           </span>
         </div>
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Fit View Button */}
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={() => {
+              if (reactFlowInstance.current) {
+                reactFlowInstance.current.fitView({ padding: 0.25, duration: 500 });
+              }
+            }}
+            icon={Maximize2}
+          >
+            Fit View
+          </Button>
+
           {/* Version Comparison Modal Trigger */}
           <Button
             variant="outline"
@@ -709,7 +806,7 @@ export default function ImageGenStudioPage() {
       </div>
 
       {/* Main Flow Canvas Viewport */}
-      <div className="flex-1 w-full h-full relative overflow-hidden bg-navy-950">
+      <div className="flex-1 w-full h-full relative overflow-hidden bg-[#0B1120]">
         <FlowCanvas
           nodes={nodes}
           edges={edges}
@@ -723,17 +820,20 @@ export default function ImageGenStudioPage() {
 
         {/* Floating Canvas Controls & Status Overlay */}
         <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 pointer-events-none">
-          <div className="bg-navy-900/90 border border-slate-800 rounded-lg p-2.5 shadow-xl backdrop-blur-md pointer-events-auto text-xs font-mono space-y-1">
-            <div className="text-[10px] uppercase text-slate-500 font-semibold">
+          <div className="bg-[#111B2B]/95 border border-[#29374B] rounded-lg p-2.5 shadow-xl backdrop-blur-md pointer-events-auto text-xs font-mono space-y-1">
+            <div className="text-[10px] text-[#77879D] font-semibold">
               Selected Target Composite
             </div>
-            <div className="text-sky-400 font-bold flex items-center gap-1.5">
+            <div className="text-[#60A5FA] font-bold flex items-center gap-1.5">
               <span>{finalizedSketch?.imageId || 'None'}</span>
-              <span className="text-[10px] text-emerald-400 font-normal">
+              <span className="text-[10px] text-[#2DD4BF] font-normal">
                 (v{finalizedSketch?.iteration || 1})
               </span>
             </div>
-            <div className="text-[10px] text-slate-400 truncate max-w-[200px]" title={finalizedSketch?.prompt}>
+            <div
+              className="text-[10px] text-[#A2B1C5] truncate max-w-[200px]"
+              title={finalizedSketch?.prompt}
+            >
               {finalizedSketch?.features?.jawline} • {finalizedSketch?.features?.eyes}
             </div>
           </div>
@@ -758,10 +858,11 @@ export default function ImageGenStudioPage() {
         currentSketch={compareTarget || finalizedSketch}
       />
 
-      {/* Session Archive Gallery Drawer */}
+      {/* Session Archive Gallery Drawer with "Show on Canvas" hook */}
       <SessionGalleryDrawer
         isOpen={isGalleryOpen}
         onClose={() => setIsGalleryOpen(false)}
+        onSelectSketch={handleFocusNodeOnCanvas}
         onDownloadPng={handleDownloadPng}
       />
 

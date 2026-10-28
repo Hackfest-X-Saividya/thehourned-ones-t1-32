@@ -25,6 +25,55 @@ const INITIAL_SKETCH = {
   }
 };
 
+const INITIAL_FLOW_NODES = [
+  {
+    id: 'node-prompt-root',
+    type: 'promptNode',
+    position: { x: 40, y: 100 },
+    data: {}
+  },
+  {
+    id: 'node-extractor-root',
+    type: 'featureExtractorNode',
+    position: { x: 410, y: 100 },
+    data: {
+      features: INITIAL_SKETCH.features,
+      status: 'EXTRACTED',
+      confidence: 94.8
+    }
+  },
+  {
+    id: 'node-sketch-1042',
+    type: 'candidateSketchNode',
+    position: { x: 780, y: 60 },
+    data: {
+      sketch: INITIAL_SKETCH,
+      isFinalized: true
+    }
+  }
+];
+
+const INITIAL_FLOW_EDGES = [
+  {
+    id: 'edge-prompt-extractor',
+    source: 'node-prompt-root',
+    sourceHandle: 'prompt-out',
+    target: 'node-extractor-root',
+    targetHandle: 'feature-in',
+    animated: true,
+    style: { stroke: '#38BDF8', strokeWidth: 2 }
+  },
+  {
+    id: 'edge-extractor-sketch-1042',
+    source: 'node-extractor-root',
+    sourceHandle: 'feature-out',
+    target: 'node-sketch-1042',
+    targetHandle: 'sketch-in',
+    animated: true,
+    style: { stroke: '#10B981', strokeWidth: 2 }
+  }
+];
+
 export function SessionProvider({ children }) {
   // Active Officer & Jurisdiction Identity
   const [officer] = useState({
@@ -91,6 +140,16 @@ export function SessionProvider({ children }) {
       // Ignore
     }
   }, []);
+
+  // React Flow Persistent Graph State across tab navigation
+  const [flowNodes, setFlowNodes] = useState(INITIAL_FLOW_NODES);
+  const [flowEdges, setFlowEdges] = useState(INITIAL_FLOW_EDGES);
+
+  // Witness input prompt and language state across tab navigation
+  const [witnessPrompt, setWitnessPrompt] = useState(
+    'Male early 30s, sharp square jawline, deep-set almond eyes, straight narrow nose, 3-day stubble, vertical scar above left eyebrow'
+  );
+  const [witnessLanguage, setWitnessLanguage] = useState('en-IN');
 
   // Reusable Toasts
   const [toasts, setToasts] = useState([]);
@@ -236,12 +295,104 @@ export function SessionProvider({ children }) {
     }
   }, []);
 
-  // Finalizes the sketch as active base image for refinement, database search & PDF export
+  // Finalizes the sketch for database search & PDF export and synchronizes node states
   const finalizeSketch = useCallback((sketch) => {
     setFinalizedSketch(sketch);
-    recordAuditAction('SELECTED_AS_BASE_IMAGE', sketch.imageId, `Selected iteration #${sketch.iteration} as active base composite for refinement`);
-    addToast(`Sketch ${sketch.imageId} selected as Base Image for refinement.`, 'success');
+    setFlowNodes((prev) =>
+      prev.map((n) => {
+        if (n.type === 'candidateSketchNode') {
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              isFinalized: n.data?.sketch?.imageId === sketch.imageId
+            }
+          };
+        }
+        return n;
+      })
+    );
+    recordAuditAction('FINALIZED_SKETCH_FOR_VERIFICATION', sketch.imageId, `Selected iteration #${sketch.iteration}`);
+    addToast(`Sketch ${sketch.imageId} finalized for Law Enforcement DB verification.`, 'success');
   }, [recordAuditAction, addToast]);
+
+  // Adds a candidate or branch sketch node to both sessionImages and persistent flow graph
+  const addGraphCandidateNode = useCallback(({ sketch, parentSketchId = null }) => {
+    setSessionImages((prev) => [sketch, ...prev]);
+    setFinalizedSketch(sketch);
+
+    const newNodeId = `node-sketch-${sketch.seed || sketch.imageId}`;
+
+    setFlowNodes((prevNodes) => {
+      const filtered = prevNodes.filter((n) => n.id !== newNodeId && n.data?.sketch?.imageId !== sketch.imageId);
+
+      let position = { x: 780, y: 60 };
+      if (parentSketchId) {
+        const parentNode = prevNodes.find((n) => n.data?.sketch?.imageId === parentSketchId);
+        if (parentNode) {
+          const siblingCount = prevNodes.filter((n) => n.data?.sketch?.parentId === parentSketchId).length;
+          position = {
+            x: parentNode.position.x + 360,
+            y: parentNode.position.y + siblingCount * 220 + 20
+          };
+        }
+      } else {
+        const rootCandidates = prevNodes.filter((n) => n.type === 'candidateSketchNode' && !n.data?.sketch?.parentId);
+        position = {
+          x: 780,
+          y: rootCandidates.length * 360 + 60
+        };
+      }
+
+      const newNode = {
+        id: newNodeId,
+        type: 'candidateSketchNode',
+        position,
+        data: {
+          sketch,
+          isFinalized: true
+        }
+      };
+
+      const unfinalized = filtered.map((n) =>
+        n.type === 'candidateSketchNode'
+          ? { ...n, data: { ...n.data, isFinalized: false } }
+          : n.id === 'node-extractor-root'
+          ? { ...n, data: { ...n.data, features: sketch.features } }
+          : n
+      );
+
+      return [...unfinalized, newNode];
+    });
+
+    setFlowEdges((prevEdges) => {
+      let sourceId = 'node-extractor-root';
+      let sourceHandle = 'feature-out';
+
+      if (parentSketchId) {
+        const parentNode = flowNodes.find((n) => n.data?.sketch?.imageId === parentSketchId);
+        if (parentNode) {
+          sourceId = parentNode.id;
+          sourceHandle = 'sketch-out';
+        }
+      }
+
+      const edgeId = `edge-${sourceId}-${newNodeId}`;
+      if (prevEdges.some((e) => e.id === edgeId)) return prevEdges;
+
+      const newEdge = {
+        id: edgeId,
+        source: sourceId,
+        sourceHandle,
+        target: newNodeId,
+        targetHandle: 'sketch-in',
+        animated: true,
+        style: { stroke: parentSketchId ? '#10B981' : '#38BDF8', strokeWidth: 2 }
+      };
+
+      return [...prevEdges, newEdge];
+    });
+  }, [flowNodes]);
 
   return (
     <SessionContext.Provider
@@ -255,6 +406,15 @@ export function SessionProvider({ children }) {
         addSessionSketches,
         finalizedSketch,
         finalizeSketch,
+        flowNodes,
+        setFlowNodes,
+        flowEdges,
+        setFlowEdges,
+        witnessPrompt,
+        setWitnessPrompt,
+        witnessLanguage,
+        setWitnessLanguage,
+        addGraphCandidateNode,
         auditLogs,
         recordAuditAction,
         simulateTamper,
@@ -279,3 +439,4 @@ export function SessionProvider({ children }) {
 }
 
 export const useSession = () => useContext(SessionContext);
+

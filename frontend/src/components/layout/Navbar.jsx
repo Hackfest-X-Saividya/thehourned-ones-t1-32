@@ -38,31 +38,31 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-navy-900/95 border-b border-slate-800 backdrop-blur-md">
+    <header className="sticky top-0 z-40 bg-[#111B2B]/95 border-b border-[#29374B] backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand & Project Identity */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
+            <div className="w-10 h-10 rounded-lg bg-[#60A5FA]/10 border border-[#60A5FA]/30 flex items-center justify-center text-[#60A5FA]">
               <Fingerprint size={22} className="stroke-[2.2]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono font-extrabold tracking-wider text-base text-white">
+                <span className="font-mono font-extrabold tracking-wider text-base text-[#E5EDF7]">
                   CHITRAGUPTA
                 </span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 bg-sky-500/20 text-sky-300 border border-sky-500/40 rounded">
+                <span className="text-[10px] font-mono px-1.5 py-0.2 bg-[#60A5FA]/15 text-[#60A5FA] border border-[#60A5FA]/30 rounded">
                   FORENSIC AI
                 </span>
               </div>
-              <div className="text-[11px] text-slate-400">
+              <div className="text-[11px] text-[#77879D]">
                 Cognitive Composite & Anatomical Verification Suite
               </div>
             </div>
           </div>
 
           {/* Navigation Tabs */}
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -72,8 +72,8 @@ export default function Navbar() {
                   className={({ isActive }) =>
                     `flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all ${
                       isActive
-                        ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-navy-800'
+                        ? 'bg-[#60A5FA]/15 text-[#60A5FA] border border-[#60A5FA]/30 shadow-sm'
+                        : 'text-[#A2B1C5] hover:text-[#E5EDF7] hover:bg-[#172337]'
                     }`
                   }
                 >
@@ -87,30 +87,30 @@ export default function Navbar() {
           {/* Officer & Mode Badges */}
           <div className="flex items-center gap-3">
             {/* Adapter Mode Indicator */}
-            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded bg-navy-950 border border-slate-800 text-[11px]">
+            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0B1120] border border-[#29374B] text-[11px]">
               <Radio
                 size={12}
-                className={isMockMode ? 'text-amber-400 animate-pulse' : 'text-emerald-400'}
+                className={isMockMode ? 'text-[#FBBF24] animate-pulse' : 'text-[#2DD4BF]'}
               />
-              <span className="text-slate-400">Adapter:</span>
-              <span className={isMockMode ? 'text-amber-300 font-mono' : 'text-emerald-300 font-mono'}>
+              <span className="text-[#77879D]">Adapter:</span>
+              <span className={isMockMode ? 'text-[#FBBF24] font-mono' : 'text-[#2DD4BF] font-mono'}>
                 {isMockMode ? 'MOCK / DEMO' : 'LIVE FASTAPI'}
               </span>
             </div>
 
             {/* Officer Identification */}
-            <div className="flex items-center gap-2.5 bg-navy-800/80 border border-slate-700/80 px-3 py-1.5 rounded-lg">
-              <div className="w-7 h-7 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-sky-400 font-mono border border-slate-600">
+            <div className="flex items-center gap-2.5 bg-[#172337] border border-[#29374B] px-3 py-1.5 rounded-lg">
+              <div className="w-7 h-7 rounded-full bg-[#203049] flex items-center justify-center text-xs font-bold text-[#60A5FA] font-mono border border-[#29374B]">
                 VR
               </div>
               <div className="text-left text-xs">
-                <div className="font-semibold text-slate-200 leading-tight flex items-center gap-1.5">
+                <div className="font-semibold text-[#E5EDF7] leading-tight flex items-center gap-1.5">
                   {officer.name}
-                  <span className="text-[10px] font-mono text-sky-400 font-normal">
+                  <span className="text-[10px] font-mono text-[#60A5FA] font-normal">
                     [{officer.id}]
                   </span>
                 </div>
-                <div className="text-[10px] text-slate-400 font-mono">
+                <div className="text-[10px] text-[#77879D] font-mono">
                   {officer.unit}
                 </div>
               </div>
@@ -121,3 +121,4 @@ export default function Navbar() {
     </header>
   );
 }
+

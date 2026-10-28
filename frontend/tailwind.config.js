@@ -7,23 +7,39 @@ export default {
   theme: {
     extend: {
       colors: {
+        theme: {
+          bg: '#0B1120',
+          panel: '#111B2B',
+          surface: '#172337',
+          border: '#29374B',
+          'text-primary': '#E5EDF7',
+          'text-secondary': '#A2B1C5',
+          'text-muted': '#77879D',
+          blue: '#60A5FA',
+          teal: '#2DD4BF',
+          success: '#34D399',
+          warning: '#FBBF24',
+          error: '#F87171'
+        },
         navy: {
-          950: '#060A12',
-          900: '#0B0F19',
-          850: '#0F1626',
-          800: '#151E32',
-          700: '#1E2B45',
+          950: '#0B1120',
+          900: '#111B2B',
+          850: '#141F32',
+          800: '#172337',
+          700: '#203049',
+          600: '#29374B'
         },
         forensic: {
-          cyan: '#38BDF8',
-          blue: '#0284C7',
-          dark: '#0369A1',
-          accent: '#0EA5E9',
-          alert: '#F43F5E',
-          warning: '#F59E0B',
-          success: '#10B981',
-          surface: '#111827',
-          card: '#1F2937'
+          cyan: '#60A5FA',
+          blue: '#3B82F6',
+          dark: '#1D4ED8',
+          accent: '#60A5FA',
+          teal: '#2DD4BF',
+          alert: '#F87171',
+          warning: '#FBBF24',
+          success: '#34D399',
+          surface: '#111B2B',
+          card: '#172337'
         }
       },
       fontFamily: {
@@ -34,3 +50,4 @@ export default {
   },
   plugins: [],
 };
+

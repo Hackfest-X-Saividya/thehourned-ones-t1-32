@@ -17,17 +17,19 @@ export default function Button({
 
   const variants = {
     primary:
-      'bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold focus:ring-sky-400 shadow-sm active:scale-[0.98]',
+      'bg-[#60A5FA] hover:bg-[#3B82F6] text-[#0B1120] font-semibold focus:ring-[#60A5FA] shadow-sm active:scale-[0.98]',
     secondary:
-      'bg-navy-800 hover:bg-navy-700 text-slate-100 border border-slate-700 hover:border-slate-600 focus:ring-sky-500',
+      'bg-[#172337] hover:bg-[#203049] text-[#E5EDF7] border border-[#29374B] hover:border-[#3B4D68] focus:ring-[#60A5FA]',
     emerald:
-      'bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold focus:ring-emerald-400 shadow-sm active:scale-[0.98]',
+      'bg-[#2DD4BF] hover:bg-[#14B8A6] text-[#0B1120] font-semibold focus:ring-[#2DD4BF] shadow-sm active:scale-[0.98]',
+    teal:
+      'bg-[#2DD4BF] hover:bg-[#14B8A6] text-[#0B1120] font-semibold focus:ring-[#2DD4BF] shadow-sm active:scale-[0.98]',
     outline:
-      'bg-transparent hover:bg-slate-800/60 text-slate-200 border border-slate-700 hover:border-slate-500 focus:ring-sky-500',
+      'bg-transparent hover:bg-[#172337] text-[#E5EDF7] border border-[#29374B] hover:border-[#3B4D68] focus:ring-[#60A5FA]',
     danger:
-      'bg-rose-600 hover:bg-rose-500 text-white font-medium focus:ring-rose-400',
+      'bg-[#F87171] hover:bg-[#EF4444] text-[#0B1120] font-medium focus:ring-[#F87171]',
     ghost:
-      'bg-transparent hover:bg-slate-800/60 text-slate-400 hover:text-slate-100 focus:ring-slate-500'
+      'bg-transparent hover:bg-[#172337] text-[#A2B1C5] hover:text-[#E5EDF7] focus:ring-[#60A5FA]'
   };
 
   const sizes = {
@@ -53,3 +55,4 @@ export default function Button({
     </button>
   );
 }
+

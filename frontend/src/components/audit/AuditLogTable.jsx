@@ -120,10 +120,10 @@ export default function AuditLogTable() {
   };
 
   return (
-    <div className="bg-navy-900 border border-slate-800 rounded-xl overflow-hidden space-y-4 p-4">
+<div className="bg-[#111B2B] border border-[#29374B] rounded-xl overflow-hidden space-y-4 p-4 shadow-sm">
       {/* Ledger Mode Switcher */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
-        <div className="flex items-center gap-1.5 p-1 bg-navy-950 rounded-lg border border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#29374B] pb-3">
+        <div className="flex items-center gap-1.5 p-1 bg-[#0B1120] rounded-lg border border-[#29374B]">
           <button
             type="button"
             onClick={() => {
@@ -132,13 +132,13 @@ export default function AuditLogTable() {
             }}
             className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-2 transition-all ${
               activeLedgerType === 'd1'
-                ? 'bg-sky-500 text-navy-950 shadow'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#60A5FA] text-[#0B1120] shadow'
+                : 'text-[#A2B1C5] hover:text-[#E5EDF7]'
             }`}
           >
             <Database size={13} />
             <span>Cloudflare D1 Audit Records (Live DB)</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-navy-900/60 font-bold">
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#111B2B] text-[#60A5FA] font-bold">
               {d1Logs.length}
             </span>
           </button>
@@ -151,13 +151,13 @@ export default function AuditLogTable() {
             }}
             className={`px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-2 transition-all ${
               activeLedgerType === 'blockchain'
-                ? 'bg-sky-500 text-navy-950 shadow'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#60A5FA] text-[#0B1120] shadow'
+                : 'text-[#A2B1C5] hover:text-[#E5EDF7]'
             }`}
           >
             <Lock size={13} />
             <span>Cryptographic SHA-256 Chain</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-navy-900/60 font-bold">
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#111B2B] text-[#60A5FA] font-bold">
               {auditLogs.length}
             </span>
           </button>
@@ -168,19 +168,18 @@ export default function AuditLogTable() {
             type="button"
             onClick={loadD1Audit}
             disabled={isLoadingD1}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-navy-950 border border-slate-700 text-xs text-sky-400 hover:text-sky-300 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#0B1120] border border-[#29374B] text-xs text-[#60A5FA] hover:text-[#93C5FD] transition-colors"
           >
             <RefreshCw size={13} className={isLoadingD1 ? 'animate-spin' : ''} />
             <span>Refresh D1 Records</span>
           </button>
         )}
       </div>
-
       {/* Table Filter Controls */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
         {/* Search */}
         <div className="relative w-full sm:w-72">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#77879D]" />
           <input
             type="text"
             value={searchQuery}
@@ -188,12 +187,12 @@ export default function AuditLogTable() {
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder={
+placeholder={
               activeLedgerType === 'd1'
                 ? 'Filter by request ID, user, action...'
                 : 'Filter by officer, action, session...'
             }
-            className="w-full bg-navy-950 border border-slate-700 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-sky-400"
+            className="w-full bg-[#0B1120] border border-[#29374B] rounded-lg pl-9 pr-3 py-1.5 text-xs text-[#E5EDF7] placeholder:text-[#77879D] focus:outline-none focus:border-[#60A5FA] transition-colors"
           />
         </div>
 
@@ -205,7 +204,7 @@ export default function AuditLogTable() {
               setSelectedAction(e.target.value);
               setCurrentPage(1);
             }}
-            className="bg-navy-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-400"
+            className="bg-[#0B1120] border border-[#29374B] rounded-lg px-2.5 py-1.5 text-xs text-[#E5EDF7] focus:outline-none focus:border-[#60A5FA] transition-colors"
           >
             <option value="ALL">All Forensic Actions</option>
             <option value="GENERATE">Image Generation</option>
@@ -218,7 +217,7 @@ export default function AuditLogTable() {
 
           <button
             onClick={() => setSortDirection(sortDirection === 'desc' ? 'asc' : 'desc')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-navy-950 border border-slate-700 text-xs text-slate-300 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B1120] border border-[#29374B] text-xs text-[#A2B1C5] hover:text-[#E5EDF7] transition-colors"
           >
             <ArrowUpDown size={13} />
             <span>{sortDirection === 'desc' ? 'Newest First' : 'Oldest First'}</span>
@@ -227,10 +226,10 @@ export default function AuditLogTable() {
       </div>
 
       {/* Audit Log Table */}
-      <div className="overflow-x-auto rounded-lg border border-slate-800">
+      <div className="overflow-x-auto rounded-lg border border-[#29374B]">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="bg-navy-950/90 text-slate-400 uppercase font-mono text-[11px] border-b border-slate-800">
+            <tr className="bg-[#0B1120] text-[#77879D] uppercase tracking-wider text-[11px] font-medium border-b border-[#29374B]">
               <th className="py-3 px-3 w-10 text-center"></th>
               {activeLedgerType === 'd1' ? (
                 <>
@@ -254,10 +253,10 @@ export default function AuditLogTable() {
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/80">
+          <tbody className="divide-y divide-[#29374B]">
             {paginatedLogs.length === 0 ? (
               <tr>
-                <td colSpan={activeLedgerType === 'd1' ? 7 : 8} className="py-8 text-center text-slate-500 font-mono">
+<td colSpan={activeLedgerType === 'd1' ? 7 : 8} className="py-8 text-center text-[#77879D] font-mono">
                   {isLoadingD1
                     ? 'Fetching audit trail from Cloudflare D1...'
                     : 'No audit records match the selected query criteria.'}
@@ -273,71 +272,70 @@ export default function AuditLogTable() {
                     <tr
                       onClick={() => toggleExpand(rowKey)}
                       className={`cursor-pointer transition-colors ${
-                        isExpanded ? 'bg-navy-950/80' : 'hover:bg-navy-950/50'
+                        isExpanded ? 'bg-[#172337]/60' : 'hover:bg-[#172337]/40'
                       }`}
                     >
-                      <td className="py-3 px-3 text-center text-slate-500">
+                      <td className="py-3 px-3 text-center text-[#77879D]">
                         {isExpanded ? (
-                          <ChevronDown size={14} className="text-sky-400" />
+                          <ChevronDown size={14} className="text-[#60A5FA]" />
                         ) : (
                           <ChevronRight size={14} />
                         )}
                       </td>
-
-                      {activeLedgerType === 'd1' ? (
+{activeLedgerType === 'd1' ? (
                         <>
-                          <td className="py-3 px-3 font-mono font-bold text-sky-400">
+                          <td className="py-3 px-3 font-mono font-semibold text-[#60A5FA]">
                             {log.requestId}
                           </td>
                           <td className="py-3 px-4">
-                            <div className="font-semibold text-slate-200">{log.userEmail || log.userId}</div>
-                            <div className="text-[10px] text-slate-500 font-mono uppercase">{log.userRole || 'officer'}</div>
+                            <div className="font-semibold text-[#E5EDF7]">{log.userEmail || log.userId}</div>
+                            <div className="text-[10px] text-[#77879D] font-mono uppercase">{log.userRole || 'officer'}</div>
                           </td>
                           <td className="py-3 px-3">{getActionBadge(log.action)}</td>
-                          <td className="py-3 px-4 font-mono text-slate-300">
-                            <div className="text-amber-300 font-bold">{log.resourceId || 'N/A'}</div>
-                            <div className="text-[10px] text-slate-500 uppercase">{log.resourceType}</div>
+                          <td className="py-3 px-4 font-mono text-[#A2B1C5]">
+                            <div className="text-[#FBBF24] font-semibold">{log.resourceId || 'N/A'}</div>
+                            <div className="text-[10px] text-[#77879D] uppercase">{log.resourceType}</div>
                           </td>
                           <td className="py-3 px-3">
-                            <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] font-mono font-semibold text-[#2DD4BF] bg-teal-950/60 border border-teal-800/60 px-1.5 py-0.5 rounded">
                               {log.status || 'SUCCESS'}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
+                          <td className="py-3 px-4 text-[#A2B1C5] font-mono text-[11px]">
                             <div>{new Date(log.timestamp).toLocaleDateString()}</div>
-                            <div className="text-slate-500">
+                            <div className="text-[#77879D]">
                               {new Date(log.timestamp).toLocaleTimeString()}
                             </div>
                           </td>
                         </>
                       ) : (
                         <>
-                          <td className="py-3 px-3 font-mono font-bold text-sky-400">
+                          <td className="py-3 px-3 font-mono font-semibold text-[#60A5FA]">
                             #{log.blockIndex}
                           </td>
                           <td className="py-3 px-4">
-                            <div className="font-semibold text-slate-200">{log.memberName}</div>
-                            <div className="text-[10px] text-slate-500 font-mono">{log.memberId}</div>
+                            <div className="font-semibold text-[#E5EDF7]">{log.memberName}</div>
+                            <div className="text-[10px] text-[#77879D] font-mono">{log.memberId}</div>
                           </td>
-                          <td className="py-3 px-4 font-mono text-slate-300">
+                          <td className="py-3 px-4 font-mono text-[#A2B1C5]">
                             <div>{log.sessionId}</div>
-                            <div className="text-[10px] text-slate-500">{log.caseNumber}</div>
+                            <div className="text-[10px] text-[#77879D]">{log.caseNumber}</div>
                           </td>
-                          <td className="py-3 px-3 font-mono text-amber-300">
+                          <td className="py-3 px-3 font-mono text-[#FBBF24]">
                             {log.imageId || 'N/A'}
                           </td>
                           <td className="py-3 px-3">{getActionBadge(log.action)}</td>
-                          <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
+                          <td className="py-3 px-4 text-[#A2B1C5] font-mono text-[11px]">
                             <div>{new Date(log.timestamp).toLocaleDateString()}</div>
-                            <div className="text-slate-500">
+                            <div className="text-[#77879D]">
                               {new Date(log.timestamp).toLocaleTimeString()}
                             </div>
                           </td>
                           <td className="py-3 px-4 font-mono text-[10px]">
-                            <div className="text-slate-500">
+                            <div className="text-[#77879D]">
                               Prev: {log.prevHash ? `${log.prevHash.slice(0, 10)}...` : '0000...'}
                             </div>
-                            <div className="text-emerald-400 font-bold">
+                            <div className="text-[#2DD4BF] font-semibold">
                               Curr: {log.currHash ? `${log.currHash.slice(0, 10)}...` : 'computing...'}
                             </div>
                           </td>
@@ -348,16 +346,16 @@ export default function AuditLogTable() {
                     {/* Expandable Inspection Details */}
                     {isExpanded && (
                       <tr>
-                        <td colSpan={activeLedgerType === 'd1' ? 7 : 8} className="p-0 bg-navy-950">
+<td colSpan={activeLedgerType === 'd1' ? 7 : 8} className="p-0 bg-[#0B1120]">
                           {activeLedgerType === 'd1' ? (
-                            <div className="p-4 border-t border-slate-800 space-y-2 bg-navy-950/90 text-xs font-mono">
-                              <div className="flex items-center justify-between text-slate-400">
-                                <span className="font-bold text-sky-400 flex items-center gap-1.5">
+                            <div className="p-4 border-t border-[#29374B] space-y-2 bg-[#0B1120] text-xs font-mono">
+                              <div className="flex items-center justify-between text-[#A2B1C5]">
+                                <span className="font-semibold text-[#60A5FA] flex items-center gap-1.5">
                                   <FileCode size={13} /> D1 Audit Payload Details ({log.id})
                                 </span>
-                                <span className="text-slate-500">Case ID: {log.caseId}</span>
+                                <span className="text-[#77879D]">Case ID: {log.caseId}</span>
                               </div>
-                              <pre className="p-3 bg-navy-900 border border-slate-800 rounded-lg text-slate-300 text-[11px] overflow-x-auto leading-relaxed">
+                              <pre className="p-3 bg-[#111B2B] border border-[#29374B] rounded-lg text-[#E5EDF7] text-[11px] overflow-x-auto leading-relaxed">
                                 {JSON.stringify(log.details || log, null, 2)}
                               </pre>
                             </div>
@@ -376,7 +374,7 @@ export default function AuditLogTable() {
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 pt-2 font-mono">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#77879D] pt-2 font-mono">
         <div>
           Showing {filteredLogs.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to{' '}
           {Math.min(currentPage * pageSize, filteredLogs.length)} of {filteredLogs.length} blocks
@@ -386,7 +384,7 @@ export default function AuditLogTable() {
           <button
             onClick={() => setCurrentPage(1)}
             disabled={currentPage === 1}
-            className="p-1 rounded bg-navy-950 border border-slate-800 disabled:opacity-40"
+            className="p-1 rounded bg-[#0B1120] border border-[#29374B] text-[#A2B1C5] hover:text-[#E5EDF7] disabled:opacity-40 transition-colors"
             aria-label="First page"
           >
             <ChevronsLeft size={14} />
@@ -394,20 +392,20 @@ export default function AuditLogTable() {
           <button
             onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
             disabled={currentPage === 1}
-            className="p-1 rounded bg-navy-950 border border-slate-800 disabled:opacity-40"
+            className="p-1 rounded bg-[#0B1120] border border-[#29374B] text-[#A2B1C5] hover:text-[#E5EDF7] disabled:opacity-40 transition-colors"
             aria-label="Previous page"
           >
             <ChevronLeft size={14} />
           </button>
 
-          <span className="px-2.5 py-1 text-slate-200">
+          <span className="px-2.5 py-1 text-[#E5EDF7]">
             Page {currentPage} of {totalPages}
           </span>
 
           <button
             onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="p-1 rounded bg-navy-950 border border-slate-800 disabled:opacity-40"
+            className="p-1 rounded bg-[#0B1120] border border-[#29374B] text-[#A2B1C5] hover:text-[#E5EDF7] disabled:opacity-40 transition-colors"
             aria-label="Next page"
           >
             <ChevronRight size={14} />
@@ -415,7 +413,7 @@ export default function AuditLogTable() {
           <button
             onClick={() => setCurrentPage(totalPages)}
             disabled={currentPage === totalPages}
-            className="p-1 rounded bg-navy-950 border border-slate-800 disabled:opacity-40"
+            className="p-1 rounded bg-[#0B1120] border border-[#29374B] text-[#A2B1C5] hover:text-[#E5EDF7] disabled:opacity-40 transition-colors"
             aria-label="Last page"
           >
             <ChevronsRight size={14} />
@@ -425,3 +423,4 @@ export default function AuditLogTable() {
     </div>
   );
 }
+

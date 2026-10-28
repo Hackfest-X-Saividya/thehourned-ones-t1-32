@@ -43,21 +43,21 @@ export default function BlockchainStatusHeader() {
   };
 
   return (
-    <div className="bg-navy-900 border border-slate-800 rounded-xl p-5 space-y-4">
+    <div className="bg-[#111B2B] border border-[#29374B] rounded-xl p-5 space-y-4 shadow-sm">
       {/* Top Banner Row */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-[#60A5FA]/10 border border-[#60A5FA]/30 flex items-center justify-center text-[#60A5FA] shrink-0">
             <Lock size={20} />
           </div>
           <div>
-            <h1 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
+            <h1 className="text-base font-bold text-[#E5EDF7] tracking-wide flex items-center gap-2">
               <span>Tamper-Proof Blockchain Audit Ledger</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 bg-sky-950 text-sky-300 border border-sky-800 rounded">
+              <span className="text-[10px] font-mono px-2 py-0.5 bg-blue-950/60 text-[#60A5FA] border border-blue-800/60 rounded">
                 SHA-256 PROOF-OF-CUSTODY
               </span>
             </h1>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-[#A2B1C5] mt-0.5">
               Cryptographically chains every member access, prompt generation, image refinement, and
               database query to ensure forensic chain-of-custody compliance.
             </p>
@@ -67,13 +67,13 @@ export default function BlockchainStatusHeader() {
         {/* Verification Status Badge */}
         <div className="flex items-center gap-2">
           {verificationResult.isValid ? (
-            <div className="flex items-center gap-2 bg-emerald-950/80 border border-emerald-500/60 px-3.5 py-2 rounded-lg text-xs font-bold text-emerald-300">
-              <CheckCircle2 size={16} className="text-emerald-400" />
+            <div className="flex items-center gap-2 bg-teal-950/60 border border-teal-800/60 px-3.5 py-2 rounded-lg text-xs font-semibold text-[#2DD4BF]">
+              <CheckCircle2 size={16} className="text-[#2DD4BF]" />
               <span>CHAIN INTEGRITY VERIFIED ({auditLogs.length} BLOCKS)</span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 bg-rose-950/90 border border-rose-500/80 px-3.5 py-2 rounded-lg text-xs font-bold text-rose-300 animate-pulse">
-              <AlertTriangle size={16} className="text-rose-400" />
+            <div className="flex items-center gap-2 bg-rose-950/70 border border-rose-800/70 px-3.5 py-2 rounded-lg text-xs font-semibold text-[#F87171] animate-pulse">
+              <AlertTriangle size={16} className="text-[#F87171]" />
               <span>TAMPER DETECTED AT BLOCK #{verificationResult.corruptedBlockIndex}</span>
             </div>
           )}
@@ -81,20 +81,20 @@ export default function BlockchainStatusHeader() {
       </div>
 
       {/* Metrics & Action Bar */}
-      <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-4">
+      <div className="pt-3.5 border-t border-[#29374B] flex flex-wrap items-center justify-between gap-4">
         {/* Quick Metrics */}
-        <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
-          <div className="bg-navy-950 px-3 py-1.5 rounded border border-slate-850">
-            <span className="text-slate-500">TOTAL BLOCKS:</span>{' '}
-            <span className="text-sky-400 font-bold">{auditLogs.length}</span>
+        <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
+          <div className="bg-[#0B1120] px-3 py-1.5 rounded-lg border border-[#29374B]">
+            <span className="text-[#77879D]">TOTAL BLOCKS:</span>{' '}
+            <span className="text-[#60A5FA] font-semibold">{auditLogs.length}</span>
           </div>
-          <div className="bg-navy-950 px-3 py-1.5 rounded border border-slate-850">
-            <span className="text-slate-500">ALGORITHM:</span>{' '}
-            <span className="text-slate-300">SHA-256</span>
+          <div className="bg-[#0B1120] px-3 py-1.5 rounded-lg border border-[#29374B]">
+            <span className="text-[#77879D]">ALGORITHM:</span>{' '}
+            <span className="text-[#E5EDF7]">SHA-256</span>
           </div>
-          <div className="bg-navy-950 px-3 py-1.5 rounded border border-slate-850">
-            <span className="text-slate-500">CUSTODY STATUS:</span>{' '}
-            <span className={verificationResult.isValid ? 'text-emerald-400' : 'text-rose-400 font-bold'}>
+          <div className="bg-[#0B1120] px-3 py-1.5 rounded-lg border border-[#29374B]">
+            <span className="text-[#77879D]">CUSTODY STATUS:</span>{' '}
+            <span className={verificationResult.isValid ? 'text-[#2DD4BF] font-semibold' : 'text-[#F87171] font-semibold'}>
               {verificationResult.isValid ? 'SECURE' : 'COMPROMISED'}
             </span>
           </div>
@@ -118,7 +118,7 @@ export default function BlockchainStatusHeader() {
               size="sm"
               onClick={handleSimulateTamperClick}
               icon={Bug}
-              className="text-amber-400 hover:text-amber-300"
+              className="text-[#FBBF24] hover:text-amber-300"
               title="Demonstrates client-side tamper detection"
             >
               Simulate Block Tamper (Demo)
@@ -137,10 +137,10 @@ export default function BlockchainStatusHeader() {
       </div>
 
       {!verificationResult.isValid && (
-        <div className="p-3 bg-rose-950/40 border border-rose-500/50 rounded-lg text-xs text-rose-200 flex items-start gap-2">
-          <ShieldAlert size={16} className="text-rose-400 shrink-0 mt-0.5" />
-          <div>
-            <strong>Forensic Integrity Alert:</strong> {verificationResult.reason}. Unauthorized
+        <div className="p-3 bg-rose-950/30 border border-rose-800/50 rounded-lg text-xs text-[#F87171] flex items-start gap-2.5">
+          <ShieldAlert size={16} className="text-[#F87171] shrink-0 mt-0.5" />
+          <div className="leading-relaxed">
+            <strong className="font-semibold">Forensic Integrity Alert:</strong> {verificationResult.reason}. Unauthorized
             alteration of audit history breaks downstream SHA-256 hashes.
           </div>
         </div>
@@ -148,3 +148,4 @@ export default function BlockchainStatusHeader() {
     </div>
   );
 }
+

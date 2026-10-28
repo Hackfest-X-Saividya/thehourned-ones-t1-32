@@ -119,3 +119,4 @@ export function stopSpeaking() {
     window.speechSynthesis.cancel();
   }
 }
+

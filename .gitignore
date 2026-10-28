@@ -6,6 +6,7 @@ frontend/dist/
 .mf/
 coverage/
 .DS_Store
+Thumbs.db
 *.log
 .env
 .dev.vars

@@ -32,10 +32,10 @@ export default function FlowCanvas({
   const defaultEdgeOptions = useMemo(
     () => ({
       animated: true,
-      style: { stroke: '#38BDF8', strokeWidth: 2 },
+      style: { stroke: '#60A5FA', strokeWidth: 2 },
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        color: '#38BDF8',
+        color: '#60A5FA',
         width: 14,
         height: 14
       }
@@ -60,18 +60,19 @@ export default function FlowCanvas({
         maxZoom={1.8}
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="#1E293B" gap={24} size={1} />
+        <Background color="#29374B" gap={24} size={1} />
         <Controls showInteractive={false} />
         <MiniMap
           nodeColor={(node) => {
-            if (node.type === 'promptNode') return '#38BDF8';
-            if (node.type === 'featureExtractorNode') return '#10B981';
-            return '#0284C7';
+            if (node.type === 'promptNode') return '#60A5FA';
+            if (node.type === 'featureExtractorNode') return '#2DD4BF';
+            return '#3B82F6';
           }}
-          maskColor="rgba(6, 10, 18, 0.85)"
-          className="border border-slate-800 rounded-lg"
+          maskColor="rgba(11, 17, 32, 0.85)"
+          className="border border-[#29374B] rounded-lg"
         />
       </ReactFlow>
     </div>
   );
 }
+

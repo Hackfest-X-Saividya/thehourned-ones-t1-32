@@ -140,34 +140,58 @@ export default function DbVerificationPage() {
   }, [records, searchQuery, selectedCategory, selectedStatus, sortBy, minScore]);
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-5">
-      {/* Minimal Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
-        <div className="flex items-center gap-2.5">
-          <Database size={18} className="text-sky-400 shrink-0" />
-          <h1 className="text-sm sm:text-base font-bold text-white tracking-wide">
-            Criminal Record Facial Feature Comparison Engine
-          </h1>
+<div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+      {/* Page Title & Synthetic Demonstration Disclaimer */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-base font-bold text-[#E5EDF7] tracking-wide flex items-center gap-2">
+              <Database size={18} className="text-[#60A5FA]" />
+              <span>Criminal Record Facial Feature Comparison Engine</span>
+            </h1>
+            <p className="text-xs text-[#A2B1C5] mt-0.5">
+              Dual-metric comparison combining 512-d biometric embedding similarity (60% weight) with
+              structured anatomical trait alignment (40% weight).
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsIntegratorOpen(true)}
+              className="flex items-center gap-2 bg-[#111B2B] hover:bg-[#172337] border border-[#29374B] hover:border-[#60A5FA]/60 px-3 py-1.5 rounded-lg text-xs font-mono transition-all text-[#A2B1C5] hover:text-[#E5EDF7] cursor-pointer shadow-sm shrink-0"
+              title="Click to integrate custom departmental database or switch datasets"
+            >
+              <span className={`w-2 h-2 rounded-full ${registryMode === 'CUSTOM_IMPORTED' && customDbRecords?.length > 0 ? 'bg-[#2DD4BF] animate-pulse' : 'bg-[#60A5FA]'}`} />
+              <span className="text-[#77879D] text-[11px]">Database:</span>
+              <span className="font-semibold text-[#E5EDF7] text-xs">
+                {registryMode === 'CUSTOM_IMPORTED' && customDbRecords?.length > 0
+                  ? `Custom (${customDbRecords.length})`
+                  : 'Synthetic Demo'}
+              </span>
+              <span className="text-[10px] text-[#60A5FA] bg-blue-950/80 px-1.5 py-0.5 rounded border border-blue-800/80 ml-0.5">
+                Integrate DB
+              </span>
+            </button>
+          </div>
         </div>
 
-        {/* Database Integrator Button / Status Pill */}
-        <button
-          type="button"
-          onClick={() => setIsIntegratorOpen(true)}
-          className="flex items-center gap-2 bg-navy-900 hover:bg-slate-800 border border-slate-700/80 hover:border-sky-500/60 px-3 py-1.5 rounded-lg text-xs font-mono transition-all text-slate-300 hover:text-white cursor-pointer shadow-sm shrink-0"
-          title="Click to integrate custom departmental database or switch datasets"
-        >
-          <span className={`w-2 h-2 rounded-full ${registryMode === 'CUSTOM_IMPORTED' && customDbRecords?.length > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-sky-400'}`} />
-          <span className="text-slate-400 text-[11px]">Database:</span>
-          <span className="font-bold text-white text-xs">
-            {registryMode === 'CUSTOM_IMPORTED' && customDbRecords?.length > 0
-              ? `Custom (${customDbRecords.length})`
-              : 'Synthetic Demo'}
-          </span>
-          <span className="text-[10px] text-sky-400 bg-sky-950/80 px-1.5 py-0.5 rounded border border-sky-850 ml-0.5">
-            Integrate DB
-          </span>
-        </button>
+        {/* Responsible AI & Non-Biometric Evidence Guardrail Notice */}
+        <div className="p-3.5 rounded-xl bg-amber-950/30 border border-amber-800/50 text-xs text-[#FBBF24] flex items-start gap-3">
+          <AlertTriangle size={18} className="text-[#FBBF24] shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <div className="font-semibold uppercase tracking-wider text-[11px] text-[#FBBF24]">
+              Mandatory Responsible AI & Forensic Evidence Notice
+            </div>
+            <div className="text-[11px] leading-relaxed text-[#FBBF24]/90">
+              All criminal records, FIR numbers, mugshots, and similarity scores presented in this
+              module are <strong>SYNTHETIC DEMONSTRATION DATA</strong>. This software does not
+              perform real-world biometric identification and does not access active operational
+              police databases. Similarity scores are investigative exploration aids only and
+              must never be presented as proof of identity, criminality, or guilt.
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main Grid: Left Panel (Query Input) + Right Panel (Database Match Results) */}
@@ -181,39 +205,39 @@ export default function DbVerificationPage() {
         <div className="lg:col-span-8 space-y-5">
           {/* Top Verdict Banner */}
           {topMatch && topMatch.combinedScore >= 75.0 ? (
-            <div className="bg-emerald-950/70 border-2 border-emerald-500/70 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl shadow-emerald-950/30">
+            <div className="bg-teal-950/50 border-2 border-[#2DD4BF]/60 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl shadow-teal-950/20">
               <div className="flex items-start gap-3.5">
-                <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-[#2DD4BF]/15 border border-[#2DD4BF]/40 flex items-center justify-center text-[#2DD4BF] shrink-0">
                   <UserCheck size={22} />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-emerald-300 tracking-wide uppercase">
-                    EXISTING CRIMINAL RECORD MATCH DETECTED
+                  <div className="text-xs font-bold text-[#2DD4BF] tracking-wide uppercase">
+                    Existing Criminal Record Match Detected
                   </div>
-                  <div className="text-xs text-slate-200 mt-0.5">
+                  <div className="text-xs text-[#E5EDF7] mt-0.5">
                     High-confidence dual-metric alignment with repeat offender{' '}
-                    <strong className="text-white">{topMatch.fullName}</strong> ({topMatch.firNumber})
+                    <strong className="text-white font-semibold">{topMatch.fullName}</strong> ({topMatch.firNumber})
                   </div>
-                  <div className="text-[11px] text-emerald-400 font-mono mt-1">
+                  <div className="text-[11px] text-[#2DD4BF] font-mono mt-1">
                     Matched {topMatch.matchedTraits?.length || 0} of 6 key anatomical traits ({topMatch.featureScore}% trait match)
                   </div>
                 </div>
               </div>
 
               <div className="text-left sm:text-right shrink-0">
-                <div className="text-2xl font-extrabold text-emerald-400 font-mono">
+                <div className="text-2xl font-extrabold text-[#2DD4BF] font-mono">
                   {topMatch.combinedScore}%
                 </div>
-                <div className="text-[10px] text-slate-400 font-mono uppercase">
+                <div className="text-[10px] text-[#77879D] font-mono uppercase">
                   Overall Weighted Score
                 </div>
               </div>
             </div>
           ) : (
-            <div className="bg-navy-900 border border-slate-800 rounded-xl p-4 flex items-center gap-3">
-              <Info size={18} className="text-sky-400 shrink-0" />
-              <div className="text-xs text-slate-300">
-                No criminal record met the 75% or higher high-confidence threshold in this registry. Closest
+<div className="bg-[#111B2B] border border-[#29374B] rounded-xl p-4 flex items-center gap-3">
+              <Info size={18} className="text-[#60A5FA] shrink-0" />
+              <div className="text-xs text-[#A2B1C5]">
+                No criminal record met the 75% or higher high-confidence threshold. Closest
                 candidate records ranked by dual similarity below.
               </div>
             </div>
@@ -235,25 +259,25 @@ export default function DbVerificationPage() {
 
           {/* Results List */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+            <div className="flex items-center justify-between text-xs font-mono text-[#77879D] px-1">
               <span>EVALUATED REGISTRY RECORDS ({filteredRecords.length})</span>
               <span>{registryMode === 'CUSTOM_IMPORTED' ? 'DEPARTMENT DATABASE' : 'SYNTHETIC PROFILES'}</span>
             </div>
 
             {isLoading ? (
-              <div className="bg-navy-900 border border-slate-800 rounded-xl p-12 text-center space-y-3">
-                <RefreshCw size={24} className="animate-spin text-sky-400 mx-auto" />
-                <div className="text-xs font-mono text-slate-400">
+<div className="bg-[#111B2B] border border-[#29374B] rounded-xl p-12 text-center space-y-3">
+                <RefreshCw size={24} className="animate-spin text-[#60A5FA] mx-auto" />
+                <div className="text-xs font-mono text-[#77879D]">
                   Executing dual-metric facial feature comparison across active registry...
                 </div>
               </div>
             ) : filteredRecords.length === 0 ? (
-              <div className="bg-navy-900 border border-slate-800 rounded-xl p-12 text-center space-y-2">
-                <Database size={24} className="text-slate-600 mx-auto" />
-                <div className="text-xs font-semibold text-slate-300">
+              <div className="bg-[#111B2B] border border-[#29374B] rounded-xl p-12 text-center space-y-2">
+                <Database size={24} className="text-[#77879D] mx-auto" />
+                <div className="text-xs font-semibold text-[#E5EDF7]">
                   No criminal records match the active search and filter criteria.
                 </div>
-                <div className="text-[11px] text-slate-500">
+                <div className="text-[11px] text-[#77879D]">
                   Try lowering the match threshold or clearing the search term.
                 </div>
               </div>

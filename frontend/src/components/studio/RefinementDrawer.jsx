@@ -93,20 +93,20 @@ export default function RefinementDrawer({
     >
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">
         {/* Parent Preview Header */}
-        <div className="flex items-center gap-3 p-3 bg-navy-950 rounded-lg border border-slate-800">
+        <div className="flex items-center gap-3 p-3 bg-[#0B1120] rounded-lg border border-[#29374B]">
           <img
             src={parentSketch.imageUrl}
             alt={parentSketch.imageId}
-            className="w-16 h-16 rounded object-cover border border-slate-700 shrink-0"
+            className="w-16 h-16 rounded object-cover border border-[#29374B] shrink-0"
           />
           <div>
-            <div className="font-mono text-sky-400 font-bold flex items-center gap-1.5">
+            <div className="font-mono text-[#60A5FA] font-semibold flex items-center gap-1.5">
               <span>Parent Node: {parentSketch.imageId}</span>
-              <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.2 rounded">
+              <span className="text-[10px] bg-[#172337] text-[#A2B1C5] border border-[#29374B] px-1.5 py-0.2 rounded">
                 v{parentSketch.iteration || 1}
               </span>
             </div>
-            <div className="text-[11px] text-slate-400 line-clamp-2 mt-1">
+            <div className="text-[11px] text-[#A2B1C5] line-clamp-2 mt-1">
               "{parentSketch.prompt}"
             </div>
           </div>
@@ -116,13 +116,13 @@ export default function RefinementDrawer({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Jawline */}
           <div>
-            <label className="block text-[11px] font-medium text-slate-300 mb-1">
+            <label className="block text-[11px] font-medium text-[#A2B1C5] mb-1">
               Jawline & Chin Geometry
             </label>
             <select
               value={jawline}
               onChange={(e) => setJawline(e.target.value)}
-              className="w-full bg-navy-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-100"
+              className="w-full bg-[#0B1120] border border-[#29374B] rounded px-2.5 py-1.5 text-xs text-[#E5EDF7] focus:outline-none focus:border-[#60A5FA]"
             >
               <option value="Sharp Square">Sharp Square</option>
               <option value="Heavy Chiseled">Heavy Chiseled</option>
@@ -133,13 +133,13 @@ export default function RefinementDrawer({
 
           {/* Eye Morphology */}
           <div>
-            <label className="block text-[11px] font-medium text-slate-300 mb-1">
+            <label className="block text-[11px] font-medium text-[#A2B1C5] mb-1">
               Eye Shape & Brow Angle
             </label>
             <select
               value={eyes}
               onChange={(e) => setEyes(e.target.value)}
-              className="w-full bg-navy-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-100"
+              className="w-full bg-[#0B1120] border border-[#29374B] rounded px-2.5 py-1.5 text-xs text-[#E5EDF7] focus:outline-none focus:border-[#60A5FA]"
             >
               <option value="Deep-set Almond">Deep-set Almond</option>
               <option value="Narrow Hooded">Narrow Hooded</option>
@@ -150,13 +150,13 @@ export default function RefinementDrawer({
 
           {/* Nasal Bridge */}
           <div>
-            <label className="block text-[11px] font-medium text-slate-300 mb-1">
+            <label className="block text-[11px] font-medium text-[#A2B1C5] mb-1">
               Nasal Bridge & Tip
             </label>
             <select
               value={nose}
               onChange={(e) => setNose(e.target.value)}
-              className="w-full bg-navy-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-100"
+              className="w-full bg-[#0B1120] border border-[#29374B] rounded px-2.5 py-1.5 text-xs text-[#E5EDF7] focus:outline-none focus:border-[#60A5FA]"
             >
               <option value="Straight Narrow Bridge">Straight Narrow Bridge</option>
               <option value="Broad Bridge">Broad Bridge</option>
@@ -167,13 +167,13 @@ export default function RefinementDrawer({
 
           {/* Facial Hair */}
           <div>
-            <label className="block text-[11px] font-medium text-slate-300 mb-1">
+            <label className="block text-[11px] font-medium text-[#A2B1C5] mb-1">
               Facial Hair / Stubble
             </label>
             <select
               value={facialHair}
               onChange={(e) => setFacialHair(e.target.value)}
-              className="w-full bg-navy-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-100"
+              className="w-full bg-[#0B1120] border border-[#29374B] rounded px-2.5 py-1.5 text-xs text-[#E5EDF7] focus:outline-none focus:border-[#60A5FA]"
             >
               <option value="3-Day Heavy Stubble">3-Day Heavy Stubble</option>
               <option value="Full Dense Beard">Full Dense Beard</option>
@@ -186,13 +186,13 @@ export default function RefinementDrawer({
 
         {/* Distinguishing Marks */}
         <div>
-          <label className="block text-[11px] font-medium text-slate-300 mb-1">
+          <label className="block text-[11px] font-medium text-[#A2B1C5] mb-1">
             Distinguishing Marks, Scars & Tattoos
           </label>
           <select
             value={marks}
             onChange={(e) => setMarks(e.target.value)}
-            className="w-full bg-navy-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-100"
+            className="w-full bg-[#0B1120] border border-[#29374B] rounded px-2.5 py-1.5 text-xs text-[#E5EDF7] focus:outline-none focus:border-[#60A5FA]"
           >
             <option value="Scar on Left Eyebrow">Vertical Scar on Left Eyebrow</option>
             <option value="Mole on Right Cheek">Mole on Right Cheek</option>
@@ -205,9 +205,9 @@ export default function RefinementDrawer({
         {/* Natural Language Freeform Adjustment with Verbal Voice Mic Option */}
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
+            <label className="text-[11px] font-medium text-[#A2B1C5] flex items-center gap-1.5">
               <span>Witness Refinement Feedback</span>
-              <span className="text-[10px] text-slate-500 font-mono">(Type or speak)</span>
+              <span className="text-[10px] text-[#77879D] font-mono">(Type or speak)</span>
             </label>
 
             {/* Mic Toggle Button */}
@@ -217,12 +217,12 @@ export default function RefinementDrawer({
               disabled={!sttSupported}
               className={`flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-medium transition-all ${
                 isRecording
-                  ? 'bg-rose-950/90 border-rose-500 text-rose-300 animate-pulse shadow-sm shadow-rose-500/20'
-                  : 'bg-navy-950 hover:bg-slate-800 border-slate-700 text-sky-400 hover:text-sky-300'
+                  ? 'bg-rose-950/90 border-[#F87171] text-[#F87171] animate-pulse shadow-sm shadow-rose-500/20'
+                  : 'bg-[#172337] hover:bg-[#203049] border-[#29374B] text-[#60A5FA] hover:text-[#93C5FD]'
               } disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer`}
               title={sttSupported ? 'Click to verbally dictate witness feedback' : 'Voice input not supported in this browser'}
             >
-              <Mic size={12} className={isRecording ? 'text-rose-400 animate-bounce' : 'text-sky-400'} />
+              <Mic size={12} className={isRecording ? 'text-[#F87171] animate-bounce' : 'text-[#60A5FA]'} />
               <span>{isRecording ? 'Listening... (Speak now)' : 'Voice Input (STT)'}</span>
             </button>
           </div>
@@ -233,7 +233,7 @@ export default function RefinementDrawer({
               value={additionalNote}
               onChange={(e) => setAdditionalNote(e.target.value)}
               placeholder="e.g. Eyebrows slightly thicker, jaw angle slightly wider, tired look under eyes, scar darker..."
-              className="w-full bg-navy-950 border border-slate-700 rounded p-2.5 pr-10 text-xs text-slate-100 resize-none focus:outline-none focus:border-sky-400 leading-relaxed font-sans"
+              className="w-full bg-[#0B1120] border border-[#29374B] rounded p-2.5 pr-10 text-xs text-[#E5EDF7] placeholder:text-[#77879D] resize-none focus:outline-none focus:border-[#60A5FA] leading-relaxed font-sans"
             />
             {/* Embedded Mic Shortcut Button inside Textarea */}
             <button
@@ -243,7 +243,7 @@ export default function RefinementDrawer({
               className={`absolute right-2.5 top-2.5 p-1.5 rounded transition-all cursor-pointer ${
                 isRecording
                   ? 'bg-rose-500 text-white animate-pulse shadow-md shadow-rose-500/30'
-                  : 'text-slate-400 hover:text-sky-400 hover:bg-slate-800'
+                  : 'text-[#77879D] hover:text-[#60A5FA] hover:bg-[#172337]'
               } disabled:opacity-30`}
               title={isRecording ? 'Click to stop listening' : 'Click to dictate feedback with microphone'}
             >
@@ -252,15 +252,15 @@ export default function RefinementDrawer({
           </div>
 
           {isRecording && (
-            <p className="text-[10px] text-rose-400 font-mono mt-1 flex items-center gap-1.5 animate-pulse">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+            <p className="text-[10px] text-[#F87171] font-mono mt-1 flex items-center gap-1.5 animate-pulse">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F87171]" />
               Microphone listening for witness statement... Speak adjustments aloud.
             </p>
           )}
         </div>
 
         {/* Modal Actions */}
-        <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+        <div className="flex justify-end gap-2 pt-2 border-t border-[#29374B]">
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
@@ -277,3 +277,4 @@ export default function RefinementDrawer({
     </Modal>
   );
 }
+

@@ -32,17 +32,17 @@ export default function VersionComparisonModal({
         {/* Side by side image cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Version A: Initial Root Composite */}
-          <div className="bg-navy-950 border border-slate-800 rounded-xl p-4 space-y-3">
+          <div className="bg-[#0B1120] border border-[#29374B] rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <span className="font-mono text-xs font-bold text-sky-400">
+                <span className="font-mono text-xs font-semibold text-[#60A5FA]">
                   {initialSketch.imageId}
                 </span>
-                <span className="ml-2 text-[10px] font-mono bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded">
+                <span className="ml-2 text-[10px] font-mono bg-[#172337] text-[#A2B1C5] border border-[#29374B] px-1.5 py-0.5 rounded">
                   v{initialSketch.iteration || 1} [BASE]
                 </span>
               </div>
-              <span className="text-[10px] text-slate-500 font-mono">
+              <span className="text-[10px] text-[#77879D] font-mono">
                 Seed: {initialSketch.seed}
               </span>
             </div>
@@ -50,26 +50,26 @@ export default function VersionComparisonModal({
             <img
               src={initialSketch.imageUrl}
               alt={initialSketch.imageId}
-              className="w-full h-64 object-cover rounded-lg border border-slate-800"
+              className="w-full h-64 object-cover rounded-lg border border-[#29374B]"
             />
 
-            <div className="text-[11px] text-slate-400 italic">
+            <div className="text-[11px] text-[#77879D] italic">
               "{initialSketch.prompt.slice(0, 80)}..."
             </div>
           </div>
 
           {/* Version B: Selected Refined Composite */}
-          <div className="bg-navy-950 border-2 border-sky-500/60 rounded-xl p-4 space-y-3">
+          <div className="bg-[#0B1120] border-2 border-[#60A5FA]/60 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <span className="font-mono text-xs font-bold text-sky-300">
+                <span className="font-mono text-xs font-semibold text-[#60A5FA]">
                   {currentSketch.imageId}
                 </span>
-                <span className="ml-2 text-[10px] font-mono bg-sky-950 text-sky-300 border border-sky-700 px-1.5 py-0.5 rounded">
+                <span className="ml-2 text-[10px] font-mono bg-[#172337] text-[#60A5FA] border border-[#29374B] px-1.5 py-0.5 rounded">
                   v{currentSketch.iteration} [CURRENT]
                 </span>
               </div>
-              <span className="text-[10px] text-slate-400 font-mono">
+              <span className="text-[10px] text-[#77879D] font-mono">
                 Parent: {currentSketch.parentId || 'None'}
               </span>
             </div>
@@ -77,51 +77,51 @@ export default function VersionComparisonModal({
             <img
               src={currentSketch.imageUrl}
               alt={currentSketch.imageId}
-              className="w-full h-64 object-cover rounded-lg border border-slate-700"
+              className="w-full h-64 object-cover rounded-lg border border-[#29374B]"
             />
 
-            <div className="text-[11px] text-sky-200">
+            <div className="text-[11px] text-[#E5EDF7]">
               {currentSketch.changeDescription || 'Refined composite version'}
             </div>
           </div>
         </div>
 
         {/* Anatomical Feature Delta Table */}
-        <div className="bg-navy-950 border border-slate-800 rounded-xl overflow-hidden">
-          <div className="bg-slate-900/80 px-4 py-2.5 border-b border-slate-800 text-xs font-bold uppercase text-slate-300 flex items-center gap-2">
-            <ArrowRightLeft size={14} className="text-sky-400" />
+        <div className="bg-[#0B1120] border border-[#29374B] rounded-xl overflow-hidden">
+          <div className="bg-[#111B2B] px-4 py-2.5 border-b border-[#29374B] text-xs font-semibold text-[#E5EDF7] flex items-center gap-2">
+            <ArrowRightLeft size={14} className="text-[#60A5FA]" />
             <span>Feature-by-Feature Anatomical Progression</span>
           </div>
 
           <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="bg-slate-950/90 text-slate-400 border-b border-slate-800 text-[11px] uppercase">
+              <tr className="bg-[#111B2B]/70 text-[#77879D] border-b border-[#29374B] text-[11px] uppercase tracking-wide">
                 <th className="py-2.5 px-4 font-medium">Anatomical Trait</th>
                 <th className="py-2.5 px-4 font-medium">Initial Version (v1)</th>
                 <th className="py-2.5 px-4 font-medium">Refined Version (v{currentSketch.iteration})</th>
                 <th className="py-2.5 px-4 font-medium">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/80">
+            <tbody className="divide-y divide-[#29374B]/70">
               {featureKeys.map(({ key, label }) => {
                 const valA = initialSketch.features?.[key] || 'Standard';
                 const valB = currentSketch.features?.[key] || 'Standard';
                 const hasChanged = valA !== valB;
 
                 return (
-                  <tr key={key} className={hasChanged ? 'bg-sky-950/20' : 'hover:bg-slate-900/40'}>
-                    <td className="py-2 px-4 font-semibold text-slate-300">{label}</td>
-                    <td className="py-2 px-4 text-slate-400 font-mono">{valA}</td>
-                    <td className={`py-2 px-4 font-mono font-medium ${hasChanged ? 'text-sky-300' : 'text-slate-400'}`}>
+                  <tr key={key} className={hasChanged ? 'bg-[#60A5FA]/10' : 'hover:bg-[#172337]/40'}>
+                    <td className="py-2 px-4 font-semibold text-[#E5EDF7]">{label}</td>
+                    <td className="py-2 px-4 text-[#A2B1C5] font-mono">{valA}</td>
+                    <td className={`py-2 px-4 font-mono font-medium ${hasChanged ? 'text-[#60A5FA]' : 'text-[#A2B1C5]'}`}>
                       {valB}
                     </td>
                     <td className="py-2 px-4">
                       {hasChanged ? (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950/60 text-[#60A5FA] border border-blue-800/60">
                           MODIFIED
                         </span>
                       ) : (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-500">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#172337] text-[#77879D] border border-[#29374B]">
                           UNCHANGED
                         </span>
                       )}
@@ -136,3 +136,4 @@ export default function VersionComparisonModal({
     </Modal>
   );
 }
+

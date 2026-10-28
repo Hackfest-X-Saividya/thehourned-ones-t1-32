@@ -86,3 +86,4 @@ export async function verifyAuditChain(blocks) {
 
   return { isValid: true, corruptedBlockIndex: null, reason: 'All cryptographic links and block hashes are verified.' };
 }
+
