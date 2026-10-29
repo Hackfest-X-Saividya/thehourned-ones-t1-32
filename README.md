@@ -279,4 +279,4 @@ npx wrangler pages deploy frontend/dist --project-name chitragupta
 
 ---
 
-*Developed with precision by **TheHourned Ones (T1-32)** for **HackFest 2026**.*
+*Developed with precision by **The Honoured Ones (T1-32)** for **HackFest 2026**.*
