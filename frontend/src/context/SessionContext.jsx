@@ -4,6 +4,10 @@ import { selectCandidateImage, fetchSavedCandidateSelection, createMockCandidate
 
 const SessionContext = createContext();
 
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function SessionProvider({ children }) {
   // Active Officer & Jurisdiction Identity
   const [officer] = useState({
@@ -132,13 +136,30 @@ export function SessionProvider({ children }) {
   }, []);
 
   // React Flow Persistent Graph State across tab navigation
-  const [flowNodes, setFlowNodes] = useState(INITIAL_FLOW_NODES);
-  const [flowEdges, setFlowEdges] = useState(INITIAL_FLOW_EDGES);
+  const [flowNodes, setFlowNodes] = useState([]);
+  const [flowEdges, setFlowEdges] = useState([]);
 
   // Witness input prompt and language state across tab navigation
-  const [witnessPrompt, setWitnessPrompt] = useState(
-    'Male early 30s, sharp square jawline, deep-set almond eyes, straight narrow nose, 3-day stubble, vertical scar above left eyebrow'
-  );
+  const [witnessPrompt, setWitnessPromptState] = useState(() => {
+    try {
+      return (
+        localStorage.getItem('forensic_witness_prompt') ||
+        'Male early 30s, sharp square jawline, deep-set almond eyes, straight narrow nose, 3-day stubble, vertical scar above left eyebrow'
+      );
+    } catch {
+      return 'Male early 30s, sharp square jawline, deep-set almond eyes, straight narrow nose, 3-day stubble, vertical scar above left eyebrow';
+    }
+  });
+
+  const setWitnessPrompt = useCallback((valueOrFn) => {
+    setWitnessPromptState((prev) => {
+      const next = typeof valueOrFn === 'function' ? valueOrFn(prev) : valueOrFn;
+      try {
+        localStorage.setItem('forensic_witness_prompt', next);
+      } catch {}
+      return next;
+    });
+  }, []);
   const [witnessLanguage, setWitnessLanguage] = useState('en-IN');
 
   // Reusable Toasts
@@ -155,6 +176,73 @@ export function SessionProvider({ children }) {
   const removeToast = useCallback((id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
+
+  // Selected Feature Catalogue Items across navigation
+  const [selectedCatalogueFeatures, setSelectedCatalogueFeatures] = useState(() => {
+    try {
+      const saved = localStorage.getItem('forensic_selected_catalogue_features');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const toggleCatalogueFeature = useCallback((feature) => {
+    if (!feature || !feature.id) return;
+
+    setSelectedCatalogueFeatures((prev) => {
+      const isAlreadySelected = prev.some((f) => f.id === feature.id);
+      let nextFeatures;
+
+      if (isAlreadySelected) {
+        // Deselect
+        nextFeatures = prev.filter((f) => f.id !== feature.id);
+        const descriptor = feature.descriptor || feature.label;
+        setWitnessPrompt((currentPrompt) => {
+          if (!currentPrompt) return '';
+          const escaped = escapeRegExp(descriptor);
+          let updated = currentPrompt
+            .replace(new RegExp(',\\s*' + escaped, 'gi'), '')
+            .replace(new RegExp(escaped + '\\s*,?\\s*', 'gi'), '')
+            .trim();
+          updated = updated.replace(/,\\s*,/g, ',').replace(/^,\\s*/, '').replace(/,\\s*$/, '').trim();
+          return updated;
+        });
+        addToast('Deselected "' + feature.label + '" from witness description', 'info', 1800);
+      } else {
+        // Select
+        nextFeatures = [...prev, feature];
+        const descriptor = feature.descriptor || feature.label;
+        setWitnessPrompt((currentPrompt) => {
+          const trimmed = (currentPrompt || '').trim();
+          if (!trimmed) {
+            return descriptor.charAt(0).toUpperCase() + descriptor.slice(1);
+          }
+          const regex = new RegExp('\\b' + escapeRegExp(descriptor) + '\\b', 'i');
+          if (regex.test(trimmed)) {
+            return trimmed;
+          }
+          const endsWithPunct = /[,;.]$/.test(trimmed);
+          return endsWithPunct ? trimmed + ' ' + descriptor : trimmed + ', ' + descriptor;
+        });
+        addToast('Added "' + feature.label + '" to witness description', 'success', 1800);
+      }
+
+      try {
+        localStorage.setItem('forensic_selected_catalogue_features', JSON.stringify(nextFeatures));
+      } catch {}
+
+      return nextFeatures;
+    });
+  }, [addToast, setWitnessPrompt]);
+
+  const clearCatalogueFeatures = useCallback(() => {
+    setSelectedCatalogueFeatures([]);
+    try {
+      localStorage.removeItem('forensic_selected_catalogue_features');
+    } catch {}
+    addToast('Cleared all catalogue selections', 'info', 2000);
+  }, [addToast]);
 
   // Tamper-Proof Cryptographic Blockchain Audit Ledger
   const [auditLogs, setAuditLogs] = useState([
@@ -493,7 +581,11 @@ export function SessionProvider({ children }) {
         setRegistryMode,
         customDbRecords,
         updateCustomDatabase,
-        resetToDefaultRegistry
+        resetToDefaultRegistry,
+        selectedCatalogueFeatures,
+        setSelectedCatalogueFeatures,
+        toggleCatalogueFeature,
+        clearCatalogueFeatures
       }}
     >
       {children}

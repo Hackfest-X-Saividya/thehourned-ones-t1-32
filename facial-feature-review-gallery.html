@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chitragupta — Facial Feature Review Gallery (Batch 1)</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --tag-bg: #0369a1;
+      --badge-green: #065f46;
+      --badge-green-text: #34d399;
+      --badge-blue: #1e3a8a;
+      --badge-blue-text: #60a5fa;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 2rem;
+      line-height: 1.5;
+    }
+    header {
+      max-width: 1280px;
+      margin: 0 auto 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-review {
+      background: #854d0e;
+      color: #fef08a;
+    }
+    p.subtitle {
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      font-size: 0.95rem;
+    }
+    .instructions {
+      margin-top: 1rem;
+      background: rgba(56, 189, 248, 0.1);
+      border-left: 4px solid var(--accent);
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      color: #bae6fd;
+    }
+    .category-section {
+      max-width: 1280px;
+      margin: 0 auto 3rem;
+    }
+    .category-header {
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+    .image-container {
+      width: 100%;
+      height: 240px;
+      background: #090d16;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .image-container img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .card-body {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #fff;
+    }
+    .card-meta {
+      font-size: 0.825rem;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+    .card-meta strong {
+      color: #cbd5e1;
+    }
+    .license-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      margin: 0.5rem 0;
+      align-self: flex-start;
+    }
+    .license-cc0 {
+      background: var(--badge-green);
+      color: var(--badge-green-text);
+    }
+    .license-ccby {
+      background: var(--badge-blue);
+      color: var(--badge-blue-text);
+    }
+    .license-pd {
+      background: #374151;
+      color: #e5e7eb;
+      border: 1px solid #6b7280;
+    }
+    .card-links {
+      margin-top: auto;
+      padding-top: 0.75rem;
+      border-top: 1px solid #293548;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+    }
+    .card-links a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .card-links a:hover {
+      text-decoration: underline;
+    }
+    .status-tag {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>
+      Chitragupta — Witness Reference Asset Gallery
+      <span class="badge badge-review">Batch 1 for Review</span>
+    </h1>
+    <p class="subtitle">
+      Pre-selected candidate reference images across Face Shapes, Eyes, Eyebrows, and Noses from public domain and open-licensed repositories.
+    </p>
+    <div class="instructions">
+      <strong>Instructions for Approval:</strong> Please review the thumbnails, descriptive labels, and licensing permissions below. Reply with which images you approve, reject, or would like alternatives for. No assets will be downloaded to the project until you approve them.
+    </div>
+  </header>
+
+  <!-- 1. FACE SHAPES -->
+  <section class="category-section">
+    <h2 class="category-header">1. Face Shapes</h2>
+    <div class="gallery-grid">
+
+      <!-- Face Shape Classification Chart -->
+      <div class="card">
+        <div class="image-container">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Face_shape_type.jpg?width=400" alt="Face shape types reference chart" loading="lazy">
+        </div>
+        <div class="card-body">
+          <div class="card-title">Face Shape Classification Guide</div>
+          <p class="card-meta"><strong>Features:</strong> Oval, Round, Square, Heart, Diamond, Oblong</p>
+          <p class="card-meta"><strong>Creator:</strong> Sahid Hossain Gazi</p>
+          <span class="license-badge license-ccby">CC BY-SA 4.0</span>
+          <p class="card-meta"><strong>Redistribution:</strong> Permitted with attribution</p>
+          <div class="card-links">
+            <span class="status-tag">Eligible for reuse</span>
+            <a href="https://commons.wikimedia.org/wiki/File:Face_shape_type.jpg" target="_blank" rel="noreferrer">Source Page ↗</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 2. EYES -->
+  <section class="category-section">
+    <h2 class="category-header">2. Eyes & Eye Characteristics</h2>
+    <div class="gallery-grid">
+
+      <!-- Brown Eye -->
+      <div class="card">
+        <div class="image-container">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Brown_eye.jpg?width=400" alt="Brown Eye Macro" loading="lazy">
+        </div>
+        <div class="card-body">
+          <div class="card-title">Brown Eye (Macro Iris & Pupil)</div>
+          <p class="card-meta"><strong>Trait:</strong> Dark pigmented iris, neutral gaze, balanced lid crease</p>
+          <p class="card-meta"><strong>Creator:</strong> Entertheninja</p>
+          <span class="license-badge license-cc0">CC0 1.0 (Public Domain)</span>
+          <p class="card-meta"><strong>Redistribution:</strong> Unrestricted commercial & local reuse</p>
+          <div class="card-links">
+            <span class="status-tag">Eligible for reuse</span>
+            <a href="https://commons.wikimedia.org/wiki/File:Brown_eye.jpg" target="_blank" rel="noreferrer">Source Page ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Blue Eye -->
+      <div class="card">
+        <div class="image-container">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/A_blue_eye.jpg?width=400" alt="Blue Eye Macro" loading="lazy">
+        </div>
+        <div class="card-body">
+          <div class="card-title">Blue Eye (Macro Iris Detail)</div>
+          <p class="card-meta"><strong>Trait:</strong> Light blue iris with visible stromal fibril detail</p>
+          <p class="card-meta"><strong>Creator:</strong> Flickr user 8068647@N07</p>
+          <span class="license-badge license-ccby">CC BY-SA 2.0</span>
+          <p class="card-meta"><strong>Redistribution:</strong> Permitted with attribution</p>
+          <div class="card-links">
+            <span class="status-tag">Eligible for reuse</span>
+            <a href="https://commons.wikimedia.org/wiki/File:A_blue_eye.jpg" target="_blank" rel="noreferrer">Source Page ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monolid / Epicanthic Fold -->
+      <div class="card">
+        <div class="image-container">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Epicanthic_Fold.jpg?width=400" alt="Epicanthic Fold / Monolid" loading="lazy">
+        </div>
+        <div class="card-body">
+          <div class="card-title">Epicanthic Fold / Monolid</div>
+          <p class="card-meta"><strong>Trait:</strong> Characteristic upper eyelid skin fold covering the inner canthus</p>
+          <p class="card-meta"><strong>Creator:</strong> RebeccaLi292</p>
+          <span class="license-badge license-cc0">CC0 1.0 (Public Domain)</span>
+          <p class="card-meta"><strong>Redistribution:</strong> Unrestricted commercial & local reuse</p>
+          <div class="card-links">
+            <span class="status-tag">Eligible for reuse</span>
+            <a href="https://commons.wikimedia.org/wiki/File:Epicanthic_Fold.jpg" target="_blank" rel="noreferrer">Source Page ↗</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 3. EYEBROWS -->
+  <section class="category-section">
+    <h2 class="category-header">3. Eyebrows</h2>
+    <div class="gallery-grid">
+
+      <!-- Unibrow -->
+      <div class="card">
+        <div class="image-container">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Unibrow_Close_Up.jpg?width=400" alt="Unibrow Synophrys" loading="lazy">
+        </div>
+        <div class="card-body">
+          <div class="card-title">Synophrys / Unibrow</div>
+          <p class="card-meta"><strong>Trait:</strong> Continuous confluent eyebrow hair across the glabella</p>
+          <p class="card-meta"><strong>Creator:</strong> User Z11o22</p>
+          <span class="license-badge license-ccby">CC BY-SA 3.0 / GFDL</span>
+          <p class="card-meta"><strong>Redistribution:</strong> Permitted with attribution</p>
+          <div class="card-links">
+            <span class="status-tag">Eligible for reuse</span>
+            <a href="https://commons.wikimedia.org/wiki/File:Unibrow_Close_Up.jpg" target="_blank" rel="noreferrer">Source Page ↗</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 4. NOSE SHAPES -->
+  <section class="category-section">
+    <h2 class="category-header">4. Nose Shapes & Anatomical Profiles</h2>
+    <div class="gallery-grid">
+
+      <!-- Straight Nose Photo -->
+      <div class="card">
+        <div class="image-container">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Human-nose.jpg?width=400" alt="Straight Human Nose Photo" loading="lazy">
+        </div>
+        <div class="card-body">
+          <div class="card-title">Straight Nose (Photographic Reference)</div>
+          <p class="card-meta"><strong>Trait:</strong> Natural human nose with linear dorsum and defined columella</p>
+          <p class="card-meta"><strong>Creator:</strong> Andrew Levine</p>
+          <span class="license-badge license-pd">Public Domain</span>
+          <p class="card-meta"><strong>Redistribution:</strong> Unrestricted commercial & local reuse</p>
+          <div class="card-links">
+            <span class="status-tag">Eligible for reuse</span>
+            <a href="https://commons.wikimedia.org/wiki/File:Human-nose.jpg" target="_blank" rel="noreferrer">Source Page ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Class I: Roman / Aquiline -->
+      <div class="card">
+        <div class="image-container">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Class_I_nose.jpg?width=400" alt="Roman Aquiline Nose Profile" loading="lazy">
+        </div>
+        <div class="card-body">
+          <div class="card-title">Aquiline / Roman Nose (Profile)</div>
+          <p class="card-meta"><strong>Trait:</strong> Distinct convex dorsal hump with gently downward-hooked bridge</p>
+          <p class="card-meta"><strong>Creator:</strong> Eden Warwick (George Jabet), 1848</p>
+          <span class="license-badge license-pd">Public Domain (Historical)</span>
+          <p class="card-meta"><strong>Redistribution:</strong> Unrestricted commercial & local reuse</p>
+          <div class="card-links">
+            <span class="status-tag">Eligible for reuse</span>
+            <a href="https://commons.wikimedia.org/wiki/File:Class_I_nose.jpg" target="_blank" rel="noreferrer">Source Page ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Class II: Grecian / Straight Profile -->
+      <div class="card">
+        <div class="image-container">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Class_II_nose.jpg?width=400" alt="Grecian Straight Nose Profile" loading="lazy">
+        </div>
+        <div class="card-body">
+          <div class="card-title">Grecian / Straight Profile</div>
+          <p class="card-meta"><strong>Trait:</strong> Continuous straight line from forehead to nasal tip without dip</p>
+          <p class="card-meta"><strong>Creator:</strong> Eden Warwick (George Jabet), 1848</p>
+          <span class="license-badge license-pd">Public Domain (Historical)</span>
+          <p class="card-meta"><strong>Redistribution:</strong> Unrestricted commercial & local reuse</p>
+          <div class="card-links">
+            <span class="status-tag">Eligible for reuse</span>
+            <a href="https://commons.wikimedia.org/wiki/File:Class_II_nose.jpg" target="_blank" rel="noreferrer">Source Page ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Class VI: Celestial / Upturned Profile -->
+      <div class="card">
+        <div class="image-container">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Class_VI_nose.jpg?width=400" alt="Celestial Upturned Nose Profile" loading="lazy">
+        </div>
+        <div class="card-body">
+          <div class="card-title">Celestial / Upturned Nose (Profile)</div>
+          <p class="card-meta"><strong>Trait:</strong> Concave bridge depression with an upward-tilted nasal tip</p>
+          <p class="card-meta"><strong>Creator:</strong> Eden Warwick (George Jabet), 1848</p>
+          <span class="license-badge license-pd">Public Domain (Historical)</span>
+          <p class="card-meta"><strong>Redistribution:</strong> Unrestricted commercial & local reuse</p>
+          <div class="card-links">
+            <span class="status-tag">Eligible for reuse</span>
+            <a href="https://commons.wikimedia.org/wiki/File:Class_VI_nose.jpg" target="_blank" rel="noreferrer">Source Page ↗</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</body>
+</html>
+

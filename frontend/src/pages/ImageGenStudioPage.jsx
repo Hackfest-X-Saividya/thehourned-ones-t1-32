@@ -177,7 +177,7 @@ function rehydrateExistingGraph(existingNodes, existingEdges, images, activeFina
         ...n,
         data: {
           ...n.data,
-          prompt: n.data?.prompt ?? promptState.prompt,
+          prompt: promptState.prompt ?? n.data?.prompt,
           onPromptChange: promptState.setPrompt,
           language: n.data?.language ?? promptState.language,
           onLanguageChange: promptState.setLanguage,
@@ -305,6 +305,7 @@ export default function ImageGenStudioPage() {
   // Prompt, Language, Composite Style and Stage 1 Candidate Variations state
   const savedPromptNode = canvasNodes?.find((n) => n.id === 'node-prompt-root');
   const [prompt, setPrompt] = useState(
+    witnessPrompt ||
     savedPromptNode?.data?.prompt ||
     'Male early 30s, sharp square jawline, deep-set almond eyes, straight narrow nose, 3-day stubble, vertical scar above left eyebrow'
   );
@@ -328,9 +329,26 @@ export default function ImageGenStudioPage() {
 
   // Ref to setNodes for stable callbacks
   const setNodesRef = useRef(null);
+  // Synchronize canvas prompt when witnessPrompt updates from Catalogue selections
+  useEffect(() => {
+    if (witnessPrompt !== undefined && witnessPrompt !== prompt) {
+      setPrompt(witnessPrompt);
+      if (setNodesRef.current) {
+        setNodesRef.current((nds) =>
+          nds.map((n) =>
+            n.id === 'node-prompt-root'
+              ? { ...n, data: { ...n.data, prompt: witnessPrompt } }
+              : n
+          )
+        );
+      }
+    }
+  }, [witnessPrompt]);
+
 
   const handlePromptChange = useCallback((newPrompt) => {
     setPrompt(newPrompt);
+    setWitnessPrompt?.(newPrompt);
     if (setNodesRef.current) {
       setNodesRef.current((nds) =>
         nds.map((n) =>

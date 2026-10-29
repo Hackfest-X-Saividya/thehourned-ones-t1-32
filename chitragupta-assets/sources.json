@@ -1,0 +1,110 @@
+[
+  {
+    "id": "face-shapes-guide-01",
+    "label": "Face Shapes Reference Classification",
+    "category": "face-shapes",
+    "localFile": "face-shapes/face-shapes-classification-01.jpg",
+    "originalUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Face_shape_type.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Face_shape_type.jpg",
+    "creator": "Sahid Hossain Gazi",
+    "license": "CC BY-SA 4.0",
+    "attribution": "Sahid Hossain Gazi, CC BY-SA 4.0 via Wikimedia Commons",
+    "redistributionPermitted": true
+  },
+  {
+    "id": "eyes-brown-macro-01",
+    "label": "Brown Eye (Macro Iris & Pupil)",
+    "category": "eyes",
+    "localFile": "eyes/eyes-brown-macro-01.jpg",
+    "originalUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Brown_eye.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Brown_eye.jpg",
+    "creator": "Entertheninja",
+    "license": "CC0 1.0 Universal (Public Domain)",
+    "attribution": "Entertheninja, Public Domain / CC0 via Wikimedia Commons",
+    "redistributionPermitted": true
+  },
+  {
+    "id": "eyes-blue-macro-01",
+    "label": "Blue Eye (Macro Iris Detail)",
+    "category": "eyes",
+    "localFile": "eyes/eyes-blue-macro-01.jpg",
+    "originalUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/A_blue_eye.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:A_blue_eye.jpg",
+    "creator": "8068647@N07",
+    "license": "CC BY-SA 2.0",
+    "attribution": "8068647@N07, CC BY-SA 2.0 via Wikimedia Commons",
+    "redistributionPermitted": true
+  },
+  {
+    "id": "eyes-monolid-epicanthic-01",
+    "label": "Epicanthic Fold / Monolid Eye",
+    "category": "eyes",
+    "localFile": "eyes/eyes-monolid-epicanthic-01.jpg",
+    "originalUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Epicanthic_Fold.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Epicanthic_Fold.jpg",
+    "creator": "RebeccaLi292",
+    "license": "CC0 1.0 Universal (Public Domain)",
+    "attribution": "RebeccaLi292, Public Domain / CC0 via Wikimedia Commons",
+    "redistributionPermitted": true
+  },
+  {
+    "id": "eyebrows-unibrow-synophrys-01",
+    "label": "Synophrys / Unibrow (Joined Eyebrows)",
+    "category": "eyebrows",
+    "localFile": "eyebrows/eyebrows-unibrow-synophrys-01.jpg",
+    "originalUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Unibrow_Close_Up.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Unibrow_Close_Up.jpg",
+    "creator": "User Z11o22",
+    "license": "CC BY-SA 3.0 / GFDL",
+    "attribution": "User Z11o22, CC BY-SA 3.0 via Wikimedia Commons",
+    "redistributionPermitted": true
+  },
+  {
+    "id": "nose-straight-photo-01",
+    "label": "Straight Nose (Photographic Reference)",
+    "category": "nose",
+    "localFile": "nose/nose-straight-photo-01.jpg",
+    "originalUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Human-nose.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Human-nose.jpg",
+    "creator": "Andrew Levine",
+    "license": "Public Domain",
+    "attribution": "Andrew Levine, Public Domain via Wikimedia Commons",
+    "redistributionPermitted": true
+  },
+  {
+    "id": "nose-aquiline-profile-01",
+    "label": "Aquiline / Roman Nose (Convex Profile)",
+    "category": "nose",
+    "localFile": "nose/nose-aquiline-profile-01.jpg",
+    "originalUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Class_I_nose.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Class_I_nose.jpg",
+    "creator": "Eden Warwick (George Jabet), 1848",
+    "license": "Public Domain (Historical)",
+    "attribution": "Eden Warwick, Public Domain via Wikimedia Commons",
+    "redistributionPermitted": true
+  },
+  {
+    "id": "nose-grecian-straight-profile-01",
+    "label": "Grecian / Straight Nose (Linear Profile)",
+    "category": "nose",
+    "localFile": "nose/nose-grecian-straight-profile-01.jpg",
+    "originalUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Class_II_nose.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Class_II_nose.jpg",
+    "creator": "Eden Warwick (George Jabet), 1848",
+    "license": "Public Domain (Historical)",
+    "attribution": "Eden Warwick, Public Domain via Wikimedia Commons",
+    "redistributionPermitted": true
+  },
+  {
+    "id": "nose-celestial-upturned-profile-01",
+    "label": "Celestial / Upturned Nose (Concave Profile)",
+    "category": "nose",
+    "localFile": "nose/nose-celestial-upturned-profile-01.jpg",
+    "originalUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Class_VI_nose.jpg",
+    "sourcePage": "https://commons.wikimedia.org/wiki/File:Class_VI_nose.jpg",
+    "creator": "Eden Warwick (George Jabet), 1848",
+    "license": "Public Domain (Historical)",
+    "attribution": "Eden Warwick, Public Domain via Wikimedia Commons",
+    "redistributionPermitted": true
+  }
+]

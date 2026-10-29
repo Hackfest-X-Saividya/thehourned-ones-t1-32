@@ -8,12 +8,13 @@ import {
   ShieldAlert,
   Fingerprint,
   Radio,
-  FileCheck2
+  FileCheck2,
+  ScanFace
 } from 'lucide-react';
 import Badge from '../common/Badge';
 
 export default function Navbar() {
-  const { officer, sessionId, caseNumber } = useSession();
+  const { officer, sessionId, caseNumber, selectedCatalogueFeatures = [] } = useSession();
   const isMockMode = import.meta.env.VITE_USE_MOCK_DATA === 'true';
 
   const navItems = [
@@ -22,6 +23,13 @@ export default function Navbar() {
       label: 'Image Gen Studio',
       icon: Compass,
       description: 'Flow-based composite sketch workspace'
+    },
+    {
+      to: '/catalogue',
+      label: 'Feature Catalogue',
+      icon: ScanFace,
+      badgeCount: selectedCatalogueFeatures.length,
+      description: 'Visual reference asset library for witness recall'
     },
     {
       to: '/db-verification',
@@ -79,6 +87,11 @@ export default function Navbar() {
                 >
                   <Icon size={15} />
                   <span>{item.label}</span>
+                  {item.badgeCount > 0 && (
+                    <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-[#60A5FA] text-[#0B1120] font-bold">
+                      {item.badgeCount}
+                    </span>
+                  )}
                 </NavLink>
               );
             })}
@@ -98,21 +111,14 @@ export default function Navbar() {
               </span>
             </div>
 
-            {/* Officer Identification */}
-            <div className="flex items-center gap-2.5 bg-[#172337] border border-[#29374B] px-3 py-1.5 rounded-lg">
-              <div className="w-7 h-7 rounded-full bg-[#203049] flex items-center justify-center text-xs font-bold text-[#60A5FA] font-mono border border-[#29374B]">
-                VR
+            {/* Officer Profile Badge */}
+            <div className="flex items-center gap-2.5 pl-3 border-l border-[#29374B]">
+              <div className="text-right hidden sm:block">
+                <div className="text-xs font-bold text-[#E5EDF7]">{officer.name}</div>
+                <div className="text-[10px] text-[#77879D] font-mono">{officer.badge}</div>
               </div>
-              <div className="text-left text-xs">
-                <div className="font-semibold text-[#E5EDF7] leading-tight flex items-center gap-1.5">
-                  {officer.name}
-                  <span className="text-[10px] font-mono text-[#60A5FA] font-normal">
-                    [{officer.id}]
-                  </span>
-                </div>
-                <div className="text-[10px] text-[#77879D] font-mono">
-                  {officer.unit}
-                </div>
+              <div className="w-8 h-8 rounded-full bg-[#172337] border border-[#29374B] flex items-center justify-center text-[#60A5FA] text-xs font-mono font-bold">
+                VR
               </div>
             </div>
           </div>
@@ -121,4 +127,3 @@ export default function Navbar() {
     </header>
   );
 }
-

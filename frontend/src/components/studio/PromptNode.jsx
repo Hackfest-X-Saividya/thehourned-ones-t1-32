@@ -1,7 +1,27 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Handle, Position } from '@xyflow/react';
-import { Mic, Volume2, Sparkles, Languages, Check, RefreshCw, AudioWaveform, Layers, Square, PenTool, Camera } from 'lucide-react';
-import { startVoiceRecognition, speakText, stopSpeaking, isSpeechRecognitionSupported, isSpeechSynthesisSupported } from '../../utils/speech';
+import {
+  Mic,
+  Volume2,
+  Sparkles,
+  Languages,
+  Check,
+  RefreshCw,
+  AudioWaveform,
+  Layers,
+  Square,
+  PenTool,
+  Camera,
+  ScanFace
+} from 'lucide-react';
+import {
+  startVoiceRecognition,
+  speakText,
+  stopSpeaking,
+  isSpeechRecognitionSupported,
+  isSpeechSynthesisSupported
+} from '../../utils/speech';
 
 export default function PromptNode({ data }) {
   const {
@@ -58,85 +78,88 @@ export default function PromptNode({ data }) {
   const handlePromptChange = (e) => {
     const val = e.target.value;
     setPrompt(val);
-    if (onPromptChange) {
-      onPromptChange(val);
-    }
+    if (onPromptChange) onPromptChange(val);
   };
 
   const handleLanguageChange = (e) => {
     const val = e.target.value;
     setLanguage(val);
-    if (onLanguageChange) {
-      onLanguageChange(val);
-    }
+    if (onLanguageChange) onLanguageChange(val);
   };
 
-  const handleNumCandidatesChange = (count) => {
-    setNumCandidates(count);
-    if (onNumCandidatesChange) {
-      onNumCandidatesChange(count);
-    }
+  const handleImageTypeChange = (selectedType) => {
+    setImageType(selectedType);
+    if (onImageTypeChange) onImageTypeChange(selectedType);
   };
 
-  const handleImageTypeChange = (type) => {
-    setImageType(type);
-    if (onImageTypeChange) {
-      onImageTypeChange(type);
-    }
+  const handleNumCandidatesChange = (val) => {
+    setNumCandidates(val);
+    if (onNumCandidatesChange) onNumCandidatesChange(val);
   };
 
   const handleToggleVoice = () => {
     if (isRecording) {
-      if (recognitionController) recognitionController.abort();
-      setIsRecording(false);
-      return;
-    }
-
-    setIsRecording(true);
-    const ctrl = startVoiceRecognition(
-      language,
-      (transcribed) => {
-        const updated = prompt ? `${prompt} ${transcribed}` : transcribed;
-        setPrompt(updated);
-        if (onPromptChange) onPromptChange(updated);
-        setIsRecording(false);
-      },
-      (err) => {
-        console.warn('Voice recognition notice:', err);
-        setIsRecording(false);
-      },
-      () => {
-        setIsRecording(false);
+      if (recognitionController && recognitionController.stop) {
+        recognitionController.stop();
       }
-    );
-    setRecognitionController(ctrl);
+      setIsRecording(false);
+    } else {
+      setIsRecording(true);
+      const controller = startVoiceRecognition(
+        language,
+        (transcript, isFinal) => {
+          if (isFinal) {
+            setPrompt((prev) => {
+              const updated = prev ? `${prev} ${transcript}` : transcript;
+              if (onPromptChange) onPromptChange(updated);
+              return updated;
+            });
+            setIsRecording(false);
+          }
+        },
+        (error) => {
+          console.error('[PromptNode] STT Error:', error);
+          setIsRecording(false);
+        }
+      );
+      setRecognitionController(controller);
+    }
   };
 
   const handleReadAloud = () => {
     if (isSpeaking) {
       stopSpeaking();
       setIsSpeaking(false);
-      return;
+    } else {
+      if (!prompt.trim()) return;
+      setIsSpeaking(true);
+      speakText(
+        prompt,
+        language,
+        () => setIsSpeaking(false),
+        (err) => {
+          console.error('[PromptNode] TTS Error:', err);
+          setIsSpeaking(false);
+        }
+      );
     }
-    if (!prompt.trim()) return;
-
-    setIsSpeaking(true);
-    speakText(prompt, language, () => {
-      setIsSpeaking(false);
-    });
   };
 
   const handleTrigger = () => {
-    if (isProcessing || !prompt.trim()) return;
     if (onTriggerExtraction) {
-      onTriggerExtraction({ prompt, language, numCandidates, imageType });
+      onTriggerExtraction({
+        prompt,
+        language,
+        numCandidates,
+        imageType
+      });
     }
   };
 
   return (
-<div className="w-80 bg-[#111B2B] border border-[#29374B] hover:border-[#60A5FA]/60 rounded-xl shadow-2xl overflow-hidden backdrop-blur-md transition-colors">
+    <div className="w-80 bg-[#111B2B] rounded-xl border border-[#29374B] shadow-2xl overflow-hidden backdrop-blur-md">
       {/* Node Header */}
-      <div className="bg-[#0B1120]/80 px-3.5 py-2.5 border-b border-[#29374B] flex items-center justify-between cursor-grab active:cursor-grabbing select-none">
+      <div className="bg-[#0B1120]/80 px-3.5 py-2.5 border-b border-[#29374B] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-[#60A5FA] animate-pulse" />
           <h3 className="text-xs font-semibold tracking-wide text-[#60A5FA]">
@@ -153,55 +176,57 @@ export default function PromptNode({ data }) {
         {/* Style Selector: Forensic Pencil vs Realistic Portrait */}
         <div className="space-y-1.5 nodrag">
           <div className="flex items-center justify-between">
-            <label className="text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
-              <PenTool size={12} className="text-sky-400" />
-              Composite Render Style:
+            <label className="text-[11px] font-medium text-[#A2B1C5] flex items-center gap-1">
+              <PenTool size={11} className="text-[#60A5FA]" />
+              Synthesis Style Mode:
             </label>
-            <span className="text-[9px] font-mono text-slate-400 uppercase">
-              {imageType === 'sketch' ? 'Pencil' : 'Photo'}
+            <span className="text-[10px] font-mono text-[#60A5FA]">
+              {imageType === 'sketch' ? 'SDXL Charcoal' : 'SDXL Lightning'}
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-1.5">
+
+          <div className="grid grid-cols-2 gap-1.5 p-0.5 bg-[#0B1120] rounded-lg border border-[#29374B]">
             <button
               type="button"
               onClick={() => handleImageTypeChange('sketch')}
-              className={`nodrag flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
+              className={`nodrag py-1.5 px-2 rounded-md text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all ${
                 imageType === 'sketch'
-                  ? 'bg-sky-500/20 border-sky-400 text-sky-200 shadow-sm shadow-sky-500/20 ring-1 ring-sky-400/30'
-                  : 'bg-navy-950 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600'
+                  ? 'bg-[#172337] text-[#60A5FA] border border-[#60A5FA]/40 shadow-sm'
+                  : 'text-[#77879D] hover:text-[#E5EDF7]'
               }`}
             >
               <PenTool size={12} />
-              <span>Forensic Pencil</span>
+              <span>Forensic Sketch</span>
             </button>
+
             <button
               type="button"
               onClick={() => handleImageTypeChange('normal')}
-              className={`nodrag flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
+              className={`nodrag py-1.5 px-2 rounded-md text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all ${
                 imageType === 'normal'
-                  ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-sm shadow-cyan-500/20 ring-1 ring-cyan-400/30'
-                  : 'bg-navy-950 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600'
+                  ? 'bg-teal-950 text-teal-300 border border-teal-500/50 shadow-sm'
+                  : 'text-[#77879D] hover:text-[#E5EDF7]'
               }`}
             >
               <Camera size={12} />
-              <span>Realistic Portrait</span>
+              <span>Realistic Photo</span>
             </button>
           </div>
         </div>
 
-        {/* Language Selection */}
-        <div>
-          <label className="text-[11px] font-medium text-[#A2B1C5] flex items-center gap-1.5 mb-1">
+        {/* Language Selection Bar */}
+        <div className="flex items-center justify-between gap-2 bg-[#0B1120] p-1.5 rounded-lg border border-[#29374B]">
+          <div className="flex items-center gap-1.5 text-[11px] text-[#A2B1C5]">
             <Languages size={13} className="text-[#60A5FA]" />
-            Interview Language:
-          </label>
+            <span>Witness Lang:</span>
+          </div>
           <select
             value={language}
-onChange={handleLanguageChange}
-            className="nodrag w-full bg-[#0B1120] border border-[#29374B] rounded px-2.5 py-1.5 text-xs text-[#E5EDF7] focus:outline-none focus:border-[#60A5FA] cursor-pointer"
+            onChange={handleLanguageChange}
+            className="nodrag bg-[#172337] text-slate-200 border border-[#29374B] rounded px-2 py-0.5 text-xs focus:outline-none focus:border-[#60A5FA]"
           >
             <option value="en-IN">English (India) - en-IN</option>
-            <option value="hi-IN">Hindi (हिन्दी) - hi-IN</option>
+            <option value="hi-IN">Hindi (हिंदी) - hi-IN</option>
             <option value="kn-IN">Kannada (ಕನ್ನಡ) - kn-IN</option>
           </select>
         </div>
@@ -209,9 +234,19 @@ onChange={handleLanguageChange}
         {/* Prompt Input Area */}
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-[11px] font-medium text-[#A2B1C5]">
-              Witness Descriptive Recall:
-            </label>
+            <div className="flex items-center gap-2">
+              <label className="text-[11px] font-medium text-[#A2B1C5]">
+                Witness Descriptive Recall:
+              </label>
+              <Link
+                to="/catalogue"
+                className="nodrag text-[10px] text-[#60A5FA] hover:text-[#93C5FD] flex items-center gap-1 font-mono hover:underline bg-[#172337] px-1.5 py-0.2 rounded border border-[#29374B]"
+                title="Browse visual reference catalogue of facial features"
+              >
+                <ScanFace size={11} />
+                <span>Feature Catalogue</span>
+              </Link>
+            </div>
             <span className="text-[10px] font-mono text-[#77879D]">
               {prompt.length}/1000
             </span>
@@ -246,7 +281,7 @@ onChange={handleLanguageChange}
             type="button"
             onClick={handleReadAloud}
             disabled={!ttsSupported || !prompt.trim()}
-className={`nodrag flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded border text-[11px] font-medium transition-all ${
+            className={`nodrag flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded border text-[11px] font-medium transition-all ${
               isSpeaking
                 ? 'bg-blue-950/80 border-[#60A5FA] text-[#60A5FA]'
                 : 'border-[#29374B] bg-[#172337] hover:bg-[#203049] text-[#A2B1C5] hover:text-[#E5EDF7]'
@@ -260,41 +295,38 @@ className={`nodrag flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 r
               </>
             ) : (
               <>
-                <Volume2 size={13} className="text-[#60A5FA]" />
+                <Volume2 size={13} className="text-[#A2B1C5]" />
                 <span>Read Aloud</span>
               </>
             )}
           </button>
         </div>
 
-        {/* Stage 1 Candidate Variations Selector (Default 4x) */}
-        <div className="bg-navy-950/80 p-2.5 rounded-lg border border-slate-800 space-y-1.5 nodrag">
-          <div className="flex items-center justify-between">
-            <label className="text-[11px] font-medium text-slate-300 flex items-center gap-1.5">
-              <Layers size={13} className="text-sky-400" />
-              Candidate Variations:
-            </label>
-            <span className="text-[10px] text-sky-400 font-mono font-bold bg-sky-950/90 px-1.5 py-0.5 rounded border border-sky-800/80">
-              {numCandidates} Variations
+        {/* Candidate Variations Selector */}
+        <div className="bg-[#0B1120] p-2 rounded-lg border border-[#29374B] space-y-1.5">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-[#A2B1C5] flex items-center gap-1">
+              <Layers size={11} className="text-[#60A5FA]" /> Candidate Variations:
             </span>
+            <span className="font-mono text-[#60A5FA] font-bold">{numCandidates} Sketches</span>
           </div>
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-4 gap-1">
             {[1, 2, 3, 4].map((count) => (
               <button
                 key={count}
                 type="button"
                 onClick={() => handleNumCandidatesChange(count)}
-                className={`nodrag py-1 text-xs font-mono font-bold rounded border transition-all cursor-pointer ${
+                className={`py-1 text-center font-mono text-[11px] rounded border transition-all ${
                   numCandidates === count
-                    ? 'bg-sky-500 text-navy-950 border-sky-400 shadow-md shadow-sky-500/20'
-                    : 'bg-navy-950 text-slate-300 border-slate-700 hover:border-slate-500 hover:text-white'
+                    ? 'bg-[#172337] border-[#60A5FA] text-[#60A5FA] font-bold shadow-sm'
+                    : 'bg-[#111B2B] border-[#29374B] text-[#77879D] hover:text-[#E5EDF7]'
                 }`}
               >
                 {count}x
               </button>
             ))}
           </div>
-          <p className="text-[10px] text-slate-400 leading-tight">
+          <p className="text-[10px] text-[#77879D] leading-tight">
             Synthesizes {numCandidates} diverse facial variations for witness selection.
           </p>
         </div>
@@ -330,4 +362,3 @@ className={`nodrag flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 r
     </div>
   );
 }
-

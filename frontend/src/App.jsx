@@ -7,6 +7,7 @@ import Footer from './components/layout/Footer';
 import Toast from './components/common/Toast';
 
 import ImageGenStudioPage from './pages/ImageGenStudioPage';
+import FeatureCataloguePage from './pages/FeatureCataloguePage';
 import DbVerificationPage from './pages/DbVerificationPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 
@@ -25,6 +26,7 @@ export default function App() {
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<ImageGenStudioPage />} />
+              <Route path="/catalogue" element={<FeatureCataloguePage />} />
               <Route path="/db-verification" element={<DbVerificationPage />} />
               <Route path="/audit-logs" element={<AuditLogsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
@@ -41,4 +43,3 @@ export default function App() {
     </SessionProvider>
   );
 }
-

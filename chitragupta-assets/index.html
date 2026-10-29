@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chitragupta — Local Facial Feature Library</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: #131b2e;
+      --card-bg: #1a243b;
+      --border: #293548;
+      --border-focus: #38bdf8;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --badge-green-bg: #064e3b;
+      --badge-green-text: #6ee7b7;
+      --badge-blue-bg: #1e3a8a;
+      --badge-blue-text: #93c5fd;
+      --badge-amber-bg: #78350f;
+      --badge-amber-text: #fde68a;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 2.5rem;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    header {
+      padding-bottom: 2rem;
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .status-pill {
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      background: var(--badge-green-bg);
+      color: var(--badge-green-text);
+      border: 1px solid rgba(110, 231, 183, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .status-pill::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+    p.lead {
+      color: var(--text-muted);
+      margin-top: 0.6rem;
+      font-size: 1.05rem;
+      max-width: 900px;
+    }
+    .stats-bar {
+      display: flex;
+      gap: 2rem;
+      margin-top: 1.5rem;
+      padding: 1rem 1.5rem;
+      background: var(--surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .category-section {
+      margin-bottom: 3.5rem;
+    }
+    .category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .category-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .category-badge {
+      font-size: 0.75rem;
+      background: #1e293b;
+      color: var(--text-muted);
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.75rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+    }
+    .image-preview {
+      width: 100%;
+      height: 260px;
+      background: #050811;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .image-preview img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+    .angle-tag {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      color: #38bdf8;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .card-content {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+    .card-label {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.6rem;
+    }
+    .meta-row {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .meta-row span.label {
+      color: #94a3b8;
+    }
+    .meta-row span.val {
+      color: #e2e8f0;
+      font-weight: 500;
+      text-align: right;
+    }
+    .badge-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 0.75rem 0;
+    }
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+    }
+    .badge-cc0 {
+      background: var(--badge-green-bg);
+      color: var(--badge-green-text);
+      border: 1px solid rgba(110, 231, 183, 0.3);
+    }
+    .badge-ccby {
+      background: var(--badge-blue-bg);
+      color: var(--badge-blue-text);
+      border: 1px solid rgba(147, 197, 253, 0.3);
+    }
+    .badge-pd {
+      background: #334155;
+      color: #cbd5e1;
+      border: 1px solid #475569;
+    }
+    .file-path {
+      font-family: monospace;
+      font-size: 0.75rem;
+      background: #0f172a;
+      padding: 0.4rem 0.6rem;
+      border-radius: 4px;
+      color: #38bdf8;
+      border: 1px solid var(--border);
+      word-break: break-all;
+      margin-top: auto;
+    }
+    .card-footer {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+    .card-footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .card-footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div class="header-top">
+        <h1>Chitragupta Local Asset Library</h1>
+        <span class="status-pill">Offline & Locally Bundled</span>
+      </div>
+      <p class="lead">
+        Standardized facial feature references downloaded locally into the <code>chitragupta-assets/</code> directory to assist witnesses in recognizing and describing facial traits. All assets are loaded from local relative disk paths.
+      </p>
+
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-value">9</span>
+          <span class="stat-label">Local Images Verified</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">4 / 12</span>
+          <span class="stat-label">Categories Populated</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">100%</span>
+          <span class="stat-label">Open / Permissive Licences</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">Local Relative</span>
+          <span class="stat-label">Image Protocol</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 1. FACE SHAPES -->
+    <section class="category-section">
+      <div class="category-header">
+        <h2 class="category-title">1. Face Shapes</h2>
+        <span class="category-badge">1 local reference asset</span>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="image-preview">
+            <span class="angle-tag">Frontal Guide</span>
+            <img src="./face-shapes/face-shapes-classification-01.jpg" alt="Face Shapes Classification">
+          </div>
+          <div class="card-content">
+            <div class="card-label">Face Shape Multi-Type Reference Guide</div>
+            <div class="meta-row">
+              <span class="label">Categories:</span>
+              <span class="val">Oval, Round, Square, Heart, Diamond, Oblong</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Creator:</span>
+              <span class="val">Sahid Hossain Gazi</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Resolution:</span>
+              <span class="val">3057 × 3480 px (271 KB)</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-ccby">CC BY-SA 4.0</span>
+            </div>
+            <div class="file-path">chitragupta-assets/face-shapes/face-shapes-classification-01.jpg</div>
+            <div class="card-footer">
+              <span style="color:#6ee7b7">✓ Verified Local</span>
+              <a href="https://commons.wikimedia.org/wiki/File:Face_shape_type.jpg" target="_blank" rel="noreferrer">Original Source ↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. EYES -->
+    <section class="category-section">
+      <div class="category-header">
+        <h2 class="category-title">2. Eyes & Eye Shapes</h2>
+        <span class="category-badge">3 local reference assets</span>
+      </div>
+      <div class="grid">
+
+        <!-- Brown Eye -->
+        <div class="card">
+          <div class="image-preview">
+            <span class="angle-tag">Macro Close-up</span>
+            <img src="./eyes/eyes-brown-macro-01.jpg" alt="Brown Eye Macro">
+          </div>
+          <div class="card-content">
+            <div class="card-label">Brown Eye (Macro Iris Detail)</div>
+            <div class="meta-row">
+              <span class="label">Trait:</span>
+              <span class="val">Dark iris pigment & pupil margin</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Creator:</span>
+              <span class="val">Entertheninja</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Resolution:</span>
+              <span class="val">803 × 512 px (155 KB)</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-cc0">CC0 1.0 (Public Domain)</span>
+            </div>
+            <div class="file-path">chitragupta-assets/eyes/eyes-brown-macro-01.jpg</div>
+            <div class="card-footer">
+              <span style="color:#6ee7b7">✓ Verified Local</span>
+              <a href="https://commons.wikimedia.org/wiki/File:Brown_eye.jpg" target="_blank" rel="noreferrer">Original Source ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Blue Eye -->
+        <div class="card">
+          <div class="image-preview">
+            <span class="angle-tag">Macro Close-up</span>
+            <img src="./eyes/eyes-blue-macro-01.jpg" alt="Blue Eye Macro">
+          </div>
+          <div class="card-content">
+            <div class="card-label">Blue Eye (Macro Iris Detail)</div>
+            <div class="meta-row">
+              <span class="label">Trait:</span>
+              <span class="val">Light blue iris with stromal fibrils</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Creator:</span>
+              <span class="val">8068647@N07</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Resolution:</span>
+              <span class="val">1536 × 1506 px (1.05 MB)</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-ccby">CC BY-SA 2.0</span>
+            </div>
+            <div class="file-path">chitragupta-assets/eyes/eyes-blue-macro-01.jpg</div>
+            <div class="card-footer">
+              <span style="color:#6ee7b7">✓ Verified Local</span>
+              <a href="https://commons.wikimedia.org/wiki/File:A_blue_eye.jpg" target="_blank" rel="noreferrer">Original Source ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monolid / Epicanthic Fold -->
+        <div class="card">
+          <div class="image-preview">
+            <span class="angle-tag">Macro Close-up</span>
+            <img src="./eyes/eyes-monolid-epicanthic-01.jpg" alt="Epicanthic Fold / Monolid">
+          </div>
+          <div class="card-content">
+            <div class="card-label">Epicanthic Fold / Monolid Eye</div>
+            <div class="meta-row">
+              <span class="label">Trait:</span>
+              <span class="val">Upper eyelid fold covering inner canthus</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Creator:</span>
+              <span class="val">RebeccaLi292</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Resolution:</span>
+              <span class="val">1200 × 675 px (447 KB)</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-cc0">CC0 1.0 (Public Domain)</span>
+            </div>
+            <div class="file-path">chitragupta-assets/eyes/eyes-monolid-epicanthic-01.jpg</div>
+            <div class="card-footer">
+              <span style="color:#6ee7b7">✓ Verified Local</span>
+              <a href="https://commons.wikimedia.org/wiki/File:Epicanthic_Fold.jpg" target="_blank" rel="noreferrer">Original Source ↗</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 3. EYEBROWS -->
+    <section class="category-section">
+      <div class="category-header">
+        <h2 class="category-title">3. Eyebrows</h2>
+        <span class="category-badge">1 local reference asset</span>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="image-preview">
+            <span class="angle-tag">Frontal Close-up</span>
+            <img src="./eyebrows/eyebrows-unibrow-synophrys-01.jpg" alt="Unibrow Synophrys">
+          </div>
+          <div class="card-content">
+            <div class="card-label">Synophrys / Unibrow (Joined Brows)</div>
+            <div class="meta-row">
+              <span class="label">Trait:</span>
+              <span class="val">Confluent brow hair across glabella</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Creator:</span>
+              <span class="val">User Z11o22</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Resolution:</span>
+              <span class="val">3680 × 1765 px (3.11 MB)</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-ccby">CC BY-SA 3.0</span>
+            </div>
+            <div class="file-path">chitragupta-assets/eyebrows/eyebrows-unibrow-synophrys-01.jpg</div>
+            <div class="card-footer">
+              <span style="color:#6ee7b7">✓ Verified Local</span>
+              <a href="https://commons.wikimedia.org/wiki/File:Unibrow_Close_Up.jpg" target="_blank" rel="noreferrer">Original Source ↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. NOSE -->
+    <section class="category-section">
+      <div class="category-header">
+        <h2 class="category-title">4. Nose Shapes & Anatomical Profiles</h2>
+        <span class="category-badge">4 local reference assets</span>
+      </div>
+      <div class="grid">
+
+        <!-- Straight Nose Photo -->
+        <div class="card">
+          <div class="image-preview">
+            <span class="angle-tag">Frontal / 3/4</span>
+            <img src="./nose/nose-straight-photo-01.jpg" alt="Straight Nose Photo">
+          </div>
+          <div class="card-content">
+            <div class="card-label">Straight Nose (Photographic Reference)</div>
+            <div class="meta-row">
+              <span class="label">Trait:</span>
+              <span class="val">Natural dorsum, defined alar base</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Creator:</span>
+              <span class="val">Andrew Levine</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Resolution:</span>
+              <span class="val">224 × 278 px (4.3 KB)</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-pd">Public Domain</span>
+            </div>
+            <div class="file-path">chitragupta-assets/nose/nose-straight-photo-01.jpg</div>
+            <div class="card-footer">
+              <span style="color:#6ee7b7">✓ Verified Local</span>
+              <a href="https://commons.wikimedia.org/wiki/File:Human-nose.jpg" target="_blank" rel="noreferrer">Original Source ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aquiline / Roman Profile -->
+        <div class="card">
+          <div class="image-preview">
+            <span class="angle-tag">Profile (90°)</span>
+            <img src="./nose/nose-aquiline-profile-01.jpg" alt="Aquiline Roman Nose Profile">
+          </div>
+          <div class="card-content">
+            <div class="card-label">Aquiline / Roman Nose (Convex Profile)</div>
+            <div class="meta-row">
+              <span class="label">Trait:</span>
+              <span class="val">Convex dorsal hump with curved tip</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Creator:</span>
+              <span class="val">Eden Warwick (1848)</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Resolution:</span>
+              <span class="val">300 × 600 px (98 KB)</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-pd">Public Domain (Historical)</span>
+            </div>
+            <div class="file-path">chitragupta-assets/nose/nose-aquiline-profile-01.jpg</div>
+            <div class="card-footer">
+              <span style="color:#6ee7b7">✓ Verified Local</span>
+              <a href="https://commons.wikimedia.org/wiki/File:Class_I_nose.jpg" target="_blank" rel="noreferrer">Original Source ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grecian Straight Profile -->
+        <div class="card">
+          <div class="image-preview">
+            <span class="angle-tag">Profile (90°)</span>
+            <img src="./nose/nose-grecian-straight-profile-01.jpg" alt="Grecian Straight Nose Profile">
+          </div>
+          <div class="card-content">
+            <div class="card-label">Grecian / Straight Nose (Linear Profile)</div>
+            <div class="meta-row">
+              <span class="label">Trait:</span>
+              <span class="val">Continuous linear line from forehead</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Creator:</span>
+              <span class="val">Eden Warwick (1848)</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Resolution:</span>
+              <span class="val">300 × 600 px (50 KB)</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-pd">Public Domain (Historical)</span>
+            </div>
+            <div class="file-path">chitragupta-assets/nose/nose-grecian-straight-profile-01.jpg</div>
+            <div class="card-footer">
+              <span style="color:#6ee7b7">✓ Verified Local</span>
+              <a href="https://commons.wikimedia.org/wiki/File:Class_II_nose.jpg" target="_blank" rel="noreferrer">Original Source ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Celestial Upturned Profile -->
+        <div class="card">
+          <div class="image-preview">
+            <span class="angle-tag">Profile (90°)</span>
+            <img src="./nose/nose-celestial-upturned-profile-01.jpg" alt="Celestial Upturned Nose Profile">
+          </div>
+          <div class="card-content">
+            <div class="card-label">Celestial / Upturned Nose (Concave Profile)</div>
+            <div class="meta-row">
+              <span class="label">Trait:</span>
+              <span class="val">Concave depression with elevated tip</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Creator:</span>
+              <span class="val">Eden Warwick (1848)</span>
+            </div>
+            <div class="meta-row">
+              <span class="label">Resolution:</span>
+              <span class="val">300 × 600 px (26 KB)</span>
+            </div>
+            <div class="badge-group">
+              <span class="badge badge-pd">Public Domain (Historical)</span>
+            </div>
+            <div class="file-path">chitragupta-assets/nose/nose-celestial-upturned-profile-01.jpg</div>
+            <div class="card-footer">
+              <span style="color:#6ee7b7">✓ Verified Local</span>
+              <a href="https://commons.wikimedia.org/wiki/File:Class_VI_nose.jpg" target="_blank" rel="noreferrer">Original Source ↗</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+</body>
+</html>
+

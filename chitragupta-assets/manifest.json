@@ -1,0 +1,130 @@
+{
+  "application": "Chitragupta Forensic Facial Composite System",
+  "module": "Local Facial Feature Reference Library",
+  "version": "2.0.0",
+  "generatedAt": "2026-10-28T19:15:43.956Z",
+  "assetBaseDir": "chitragupta-assets",
+  "summary": {
+    "totalLocalAssets": 9,
+    "categoriesCount": 12
+  },
+  "assets": [
+    {
+      "id": "face-shapes-guide-01",
+      "label": "Face Shapes Reference Classification",
+      "category": "face-shapes",
+      "path": "face-shapes/face-shapes-classification-01.jpg",
+      "viewingAngle": "Frontal Guide",
+      "format": "image/jpeg",
+      "fileSizeBytes": 271646,
+      "status": "VERIFIED_LOCAL",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Face_shape_type.jpg",
+      "license": "CC BY-SA 4.0",
+      "creator": "Sahid Hossain Gazi"
+    },
+    {
+      "id": "eyes-brown-macro-01",
+      "label": "Brown Eye (Macro Iris & Pupil)",
+      "category": "eyes",
+      "path": "eyes/eyes-brown-macro-01.jpg",
+      "viewingAngle": "Macro Close-up",
+      "format": "image/jpeg",
+      "fileSizeBytes": 155742,
+      "status": "VERIFIED_LOCAL",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Brown_eye.jpg",
+      "license": "CC0 1.0 Universal (Public Domain)",
+      "creator": "Entertheninja"
+    },
+    {
+      "id": "eyes-blue-macro-01",
+      "label": "Blue Eye (Macro Iris Detail)",
+      "category": "eyes",
+      "path": "eyes/eyes-blue-macro-01.jpg",
+      "viewingAngle": "Macro Close-up",
+      "format": "image/jpeg",
+      "fileSizeBytes": 1058365,
+      "status": "VERIFIED_LOCAL",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:A_blue_eye.jpg",
+      "license": "CC BY-SA 2.0",
+      "creator": "8068647@N07"
+    },
+    {
+      "id": "eyes-monolid-epicanthic-01",
+      "label": "Epicanthic Fold / Monolid Eye",
+      "category": "eyes",
+      "path": "eyes/eyes-monolid-epicanthic-01.jpg",
+      "viewingAngle": "Macro Close-up",
+      "format": "image/jpeg",
+      "fileSizeBytes": 447452,
+      "status": "VERIFIED_LOCAL",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Epicanthic_Fold.jpg",
+      "license": "CC0 1.0 Universal (Public Domain)",
+      "creator": "RebeccaLi292"
+    },
+    {
+      "id": "eyebrows-unibrow-synophrys-01",
+      "label": "Synophrys / Unibrow (Joined Eyebrows)",
+      "category": "eyebrows",
+      "path": "eyebrows/eyebrows-unibrow-synophrys-01.jpg",
+      "viewingAngle": "Frontal Close-up",
+      "format": "image/jpeg",
+      "fileSizeBytes": 3113023,
+      "status": "VERIFIED_LOCAL",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Unibrow_Close_Up.jpg",
+      "license": "CC BY-SA 3.0 / GFDL",
+      "creator": "User Z11o22"
+    },
+    {
+      "id": "nose-straight-photo-01",
+      "label": "Straight Nose (Photographic Reference)",
+      "category": "nose",
+      "path": "nose/nose-straight-photo-01.jpg",
+      "viewingAngle": "Frontal / Three-Quarter",
+      "format": "image/jpeg",
+      "fileSizeBytes": 4336,
+      "status": "VERIFIED_LOCAL",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Human-nose.jpg",
+      "license": "Public Domain",
+      "creator": "Andrew Levine"
+    },
+    {
+      "id": "nose-aquiline-profile-01",
+      "label": "Aquiline / Roman Nose (Convex Profile)",
+      "category": "nose",
+      "path": "nose/nose-aquiline-profile-01.jpg",
+      "viewingAngle": "Profile (90°)",
+      "format": "image/jpeg",
+      "fileSizeBytes": 98388,
+      "status": "VERIFIED_LOCAL",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Class_I_nose.jpg",
+      "license": "Public Domain (Historical)",
+      "creator": "Eden Warwick (George Jabet), 1848"
+    },
+    {
+      "id": "nose-grecian-straight-profile-01",
+      "label": "Grecian / Straight Nose (Linear Profile)",
+      "category": "nose",
+      "path": "nose/nose-grecian-straight-profile-01.jpg",
+      "viewingAngle": "Profile (90°)",
+      "format": "image/jpeg",
+      "fileSizeBytes": 50867,
+      "status": "VERIFIED_LOCAL",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Class_II_nose.jpg",
+      "license": "Public Domain (Historical)",
+      "creator": "Eden Warwick (George Jabet), 1848"
+    },
+    {
+      "id": "nose-celestial-upturned-profile-01",
+      "label": "Celestial / Upturned Nose (Concave Profile)",
+      "category": "nose",
+      "path": "nose/nose-celestial-upturned-profile-01.jpg",
+      "viewingAngle": "Profile (90°)",
+      "format": "image/jpeg",
+      "fileSizeBytes": 26774,
+      "status": "VERIFIED_LOCAL",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Class_VI_nose.jpg",
+      "license": "Public Domain (Historical)",
+      "creator": "Eden Warwick (George Jabet), 1848"
+    }
+  ]
+}
