@@ -9,7 +9,8 @@ import {
   Fingerprint,
   Radio,
   FileCheck2,
-  ScanFace
+  ScanFace,
+  Globe
 } from 'lucide-react';
 import Badge from '../common/Badge';
 
@@ -71,6 +72,14 @@ export default function Navbar() {
 
           {/* Navigation Tabs */}
           <nav className="flex items-center gap-1.5">
+            <a
+              href="/landing.html"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-[#A2B1C5] hover:text-[#60A5FA] hover:bg-[#172337] transition-all"
+              title="Return to CHITRAGUPTA Landing Portal"
+            >
+              <Globe size={15} className="text-[#60A5FA]" />
+              <span>Portal</span>
+            </a>
             {navItems.map((item) => {
               const Icon = item.icon;
               return (

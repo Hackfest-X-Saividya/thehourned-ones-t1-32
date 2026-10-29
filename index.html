@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CHITRAGUPTA — AI Forensic Criminal Composite & Biometric Intelligence</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans (300, 400, 500, 600, 800) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;800&display=block" rel="stylesheet">
+
+  <style>
+    /* ============================================================
+       1. FONTS & ROOT DESIGN SYSTEM
+       ============================================================ */
+    @font-face {
+      font-family: 'PJS';
+      src: local('Plus Jakarta Sans');
+    }
+
+    :root {
+      --u: min(calc(100vw / 1280), calc(100dvh / 760));
+
+      --ink:        #ffffff;
+      --ink-muted:  #ededed;
+      --panel:      #181818;
+      --white-btn:  #fdfdfd;
+      --btn-ink:    #050505;
+      --glass-fill: rgba(0,0,0,.78);
+      --glass-line: rgba(255,255,255,.09);
+
+      --dx: 8.5;    /* hero block optical offset, solved against the reference render */
+      --dy: 13.1;
+
+      --e-reveal: cubic-bezier(.16, 1, .3, 1);   /* long, graceful settle */
+      --e-soft:   cubic-bezier(.25, .8, .3, 1);  /* supporting elements   */
+    }
+
+    @supports not (height: 100dvh) {
+      :root { --u: min(calc(100vw / 1280), calc(100vh / 760)); }
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: 'PJS', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: geometricPrecision;
+      color: var(--ink);
+    }
+
+    /* ============================================================
+       3. STRUCTURE & HERO LAYOUT
+       ============================================================ */
+    .hero {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+      background: #000;
+    }
+    @supports not (height: 100dvh) {
+      .hero { height: 100vh; }
+    }
+
+    /* 1280:800 bleed box, always covering the viewport */
+    .bg {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: max(100vw, calc(100dvh * 1.6));
+      height: max(62.5vw, 100dvh);
+      background-color: #000;
+    }
+    @supports not (height: 100dvh) {
+      .bg {
+        width: max(100vw, calc(100vh * 1.6));
+        height: max(62.5vw, 100vh);
+      }
+    }
+
+    .bg-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 51% 8%;      /* framing inherited from the still it replaces */
+      display: block;
+      background-color: #000;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .9s linear;
+    }
+    .bg-video.is-active { opacity: 1; }
+
+    /* ============================================================
+       5. NAV (desktop)
+       ============================================================ */
+    .nav {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: calc(67 * var(--u));
+      display: flex;
+      align-items: center;
+      padding-left: calc(24.5 * var(--u));
+      padding-right: calc(50.7 * var(--u));
+      z-index: 3;
+    }
+
+    .logo {
+      font-weight: 800;
+      font-size: calc(26 * var(--u));
+      letter-spacing: calc(0.45 * var(--u));
+      transform: translateY(calc(-2.4 * var(--u)));
+      line-height: 1;
+      color: var(--ink);
+      text-decoration: none;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: calc(8 * var(--u));
+    }
+    .logo-badge {
+      display: inline-block;
+      font-size: calc(9 * var(--u));
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: calc(3 * var(--u)) calc(7 * var(--u));
+      background: rgba(56, 189, 248, 0.14);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: calc(6 * var(--u));
+      transform: translateY(calc(-1 * var(--u)));
+    }
+
+    .nav-links {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) translateX(calc(-23 * var(--u)));
+      display: flex;
+      align-items: center;
+      gap: calc(24.3 * var(--u));
+      white-space: nowrap;
+    }
+    .nav-links a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      font-size: calc(11.5 * var(--u));
+      font-weight: 500;
+      letter-spacing: calc(-0.15 * var(--u));
+      line-height: 1;
+      transition: color .18s ease;
+    }
+    .nav-links a:hover { color: #fff; }
+
+    .nav-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: calc(6.8 * var(--u));
+    }
+
+    /* Shared button base */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+      text-decoration: none;
+      white-space: nowrap;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .btn-login {
+      height: calc(28 * var(--u));
+      padding: 0 calc(12.9 * var(--u));
+      border-radius: calc(14 * var(--u));
+      background: var(--panel);
+      color: #e8e8e8;
+      font-size: calc(11.5 * var(--u));
+      font-weight: 500;
+      letter-spacing: calc(-0.15 * var(--u));
+      transition: background .18s ease, color .18s ease;
+    }
+    .btn-login:hover {
+      background: #232323;
+      color: #fff;
+    }
+
+    .btn-nav-start {
+      height: calc(28 * var(--u));
+      padding-left: calc(13.5 * var(--u));
+      padding-right: calc(14.5 * var(--u));
+      border-radius: calc(14 * var(--u));
+      background: var(--white-btn);
+      color: var(--btn-ink);
+      font-size: calc(11.1 * var(--u));
+      font-weight: 500;
+      letter-spacing: 0;
+      gap: calc(7 * var(--u));
+      transition: background .18s ease;
+    }
+    .btn-nav-start:hover { background: #fff; }
+    .btn-nav-start .arw {
+      width: calc(11.5 * var(--u));
+      height: calc(9.6 * var(--u));
+    }
+
+    .burger {
+      display: none; /* desktop */
+      margin-left: auto;
+      width: calc(40 * var(--u));
+      height: calc(28 * var(--u));
+      align-items: center;
+      justify-content: center;
+      background: var(--panel);
+      border-radius: calc(14 * var(--u));
+      border: 0;
+      cursor: pointer;
+      padding: 0;
+    }
+    .burger span {
+      display: block;
+      width: 16px;
+      height: 1.5px;
+      background: #ededed;
+      border-radius: 2px;
+      position: relative;
+    }
+    .burger span::before,
+    .burger span::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      width: 16px;
+      height: 1.5px;
+      background: #ededed;
+      border-radius: 2px;
+      transition: transform .18s ease;
+    }
+    .burger span::before { top: -5px; }
+    .burger span::after { top: 5px; }
+
+    .arw {
+      flex: 0 0 auto;
+      display: block;
+    }
+
+    /* ============================================================
+       6. HERO CONTENT
+       ============================================================ */
+    .hero-inner {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) translate(calc(var(--dx) * var(--u)), calc(var(--dy) * var(--u)));
+      width: max-content;
+      text-align: center;
+      z-index: 2;
+    }
+
+    .ln { display: block; }
+    .ln-i { display: block; }
+    h1 {
+      margin: 0;
+      font-weight: 500;
+      font-size: calc(89 * var(--u));
+      line-height: calc(90 * var(--u));
+      letter-spacing: calc(-1 * var(--u));
+      color: var(--ink);
+    }
+
+    .sub {
+      margin: calc(16.1 * var(--u)) 0 0;
+      font-weight: 300;
+      font-size: calc(17.4 * var(--u));
+      line-height: calc(27 * var(--u));
+      letter-spacing: calc(-0.30 * var(--u));
+      color: #f6f6f6;
+    }
+
+    .ctas {
+      margin-top: calc(21.8 * var(--u));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: translateX(calc(-0.75 * var(--u)));
+      gap: calc(7 * var(--u));
+    }
+
+    .btn-lg {
+      height: calc(39 * var(--u));
+      border-radius: calc(19.5 * var(--u));
+      font-size: calc(13.3 * var(--u));
+      font-weight: 500;
+      letter-spacing: calc(-0.3 * var(--u));
+      gap: calc(9 * var(--u));
+    }
+    .btn-primary {
+      background: var(--white-btn);
+      color: var(--btn-ink);
+      padding-left: calc(18.2 * var(--u));
+      padding-right: calc(19.2 * var(--u));
+      transition: background .18s ease, transform .18s ease;
+    }
+    .btn-primary:hover { background: #fff; }
+
+    .btn-ghost {
+      background: var(--glass-fill);
+      color: #d9d9d9;
+      padding: 0 calc(17.4 * var(--u));
+      border: 1px solid var(--glass-line);
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+      transition: background .18s ease, border-color .18s ease;
+    }
+    .btn-ghost:hover {
+      background: rgba(0,0,0,.66);
+      border-color: rgba(255,255,255,.16);
+    }
+    .btn-lg .arw {
+      width: calc(13 * var(--u));
+      height: calc(10.8 * var(--u));
+    }
+
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid #a78bfa;
+      outline-offset: 3px;
+      border-radius: 99px;
+    }
+
+    /* ============================================================
+       7. MOBILE MENU
+       ============================================================ */
+    .menu { display: none; }
+    @keyframes menuIn {
+      from { opacity: 0; transform: translateY(-6px) scale(.985); }
+      to { opacity: 1; transform: none; }
+    }
+
+    /* ============================================================
+       LOGIN MODAL — HIGH-SECURITY FORENSIC PORTAL
+       ============================================================ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.78);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .24s ease;
+    }
+    .modal-overlay.is-open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      position: relative;
+      background: rgba(13, 14, 18, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      width: min(440px, calc(100vw - 36px));
+      padding: 32px 28px 28px;
+      box-shadow: 0 32px 90px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(56, 189, 248, 0.15);
+      transform: translateY(14px) scale(0.98);
+      transition: transform .24s var(--e-reveal);
+    }
+    .modal-overlay.is-open .modal-card {
+      transform: none;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      width: 32px;
+      height: 32px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #bbb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      transition: background .18s ease, color .18s ease;
+    }
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    .modal-header {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+    .modal-emblem {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      color: #38bdf8;
+      margin-bottom: 12px;
+    }
+    .modal-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #fff;
+    }
+    .modal-subtitle {
+      margin: 6px 0 0;
+      font-size: 12px;
+      font-weight: 400;
+      color: #8e95a5;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #c4c8d4;
+      margin-bottom: 7px;
+      letter-spacing: -0.01em;
+    }
+    .form-input {
+      width: 100%;
+      height: 44px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 0 14px;
+      font-family: inherit;
+      font-size: 14px;
+      color: #fff;
+      outline: none;
+      transition: border-color .18s ease, background .18s ease;
+    }
+    .form-input:focus {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.04);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+    }
+    .form-input::placeholder {
+      color: #555b6d;
+    }
+
+    .demo-officers {
+      margin-top: 14px;
+      margin-bottom: 18px;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed rgba(255, 255, 255, 0.09);
+      border-radius: 12px;
+    }
+    .demo-officers-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #7d8597;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 7px;
+    }
+    .demo-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .demo-pill {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 4px 9px;
+      font-size: 11px;
+      color: #ddd;
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+    .demo-pill:hover {
+      background: rgba(56, 189, 248, 0.14);
+      border-color: rgba(56, 189, 248, 0.35);
+      color: #38bdf8;
+    }
+
+    .btn-submit {
+      width: 100%;
+      height: 44px;
+      border-radius: 12px;
+      background: #fdfdfd;
+      color: #050505;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      border: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background .18s ease, transform .12s ease;
+      box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
+    }
+    .btn-submit:hover {
+      background: #ffffff;
+      transform: translateY(-1px);
+    }
+    .btn-submit:active {
+      transform: translateY(1px);
+    }
+
+    .modal-notice {
+      margin-top: 14px;
+      font-size: 10.5px;
+      line-height: 1.45;
+      color: #555d70;
+      text-align: center;
+    }
+
+    /* ============================================================
+       8. BREAKPOINTS
+       ============================================================ */
+    /* --- TABLET: max-width 1160px --- */
+    @media (max-width: 1160px) {
+      :root {
+        --u: min(
+          max(0.9px, min(calc(100vw / 1280), calc(100dvh / 760))),
+          calc((100vw - 72px) / 575),
+          calc(100dvh / 620)
+        );
+      }
+      .nav {
+        height: max(58px, calc(67 * var(--u)));
+        padding-left: max(24px, calc(28 * var(--u)));
+        padding-right: max(24px, calc(28 * var(--u)));
+      }
+      .nav-links, .nav-actions { display: none; }
+      .burger {
+        display: flex;
+        width: max(46px, calc(48 * var(--u)));
+        height: max(38px, calc(34 * var(--u)));
+        border-radius: 999px;
+      }
+      .hero-inner { max-width: calc(100vw - 48px); }
+      .sub {
+        font-size: max(16px, calc(17.4 * var(--u)));
+        line-height: max(25px, calc(27 * var(--u)));
+      }
+      .ctas {
+        margin-top: max(26px, calc(21.8 * var(--u)));
+        gap: max(10px, calc(7 * var(--u)));
+      }
+      .btn-lg {
+        height: max(44px, calc(39 * var(--u)));
+        border-radius: max(22px, calc(19.5 * var(--u)));
+        font-size: max(15px, calc(13.3 * var(--u)));
+        gap: max(10px, calc(9 * var(--u)));
+      }
+      .btn-primary {
+        padding-left: max(21px, calc(18.2 * var(--u)));
+        padding-right: max(22px, calc(19.2 * var(--u)));
+      }
+      .btn-ghost {
+        padding-left: max(20px, calc(17.4 * var(--u)));
+        padding-right: max(21px, calc(18.4 * var(--u)));
+      }
+      .btn-lg .arw {
+        width: max(14px, calc(13 * var(--u)));
+        height: max(11.6px, calc(10.8 * var(--u)));
+      }
+      .menu {
+        position: absolute;
+        top: calc(max(58px, calc(67 * var(--u))) - 6px);
+        right: max(24px, calc(28 * var(--u)));
+        width: min(320px, calc(100vw - 48px));
+        background: rgba(10, 10, 12, .86);
+        -webkit-backdrop-filter: blur(22px);
+        backdrop-filter: blur(22px);
+        border: 1px solid rgba(255, 255, 255, .09);
+        border-radius: 20px;
+        padding: 10px 8px 12px;
+        flex-direction: column;
+        box-shadow: 0 24px 60px rgba(0,0,0,.55);
+        transform-origin: top right;
+        z-index: 5;
+      }
+      .menu.open {
+        display: flex;
+        animation: menuIn .18s ease both;
+      }
+      .menu a {
+        color: var(--ink-muted);
+        text-decoration: none;
+        font-size: 15px;
+        font-weight: 500;
+        letter-spacing: calc(-0.15 * var(--u));
+        padding: 12px 14px;
+        border-radius: 12px;
+        transition: background .18s ease, color .18s ease;
+      }
+      .menu a:hover {
+        background: rgba(255, 255, 255, .06);
+        color: #fff;
+      }
+      .menu .divider {
+        height: 1px;
+        background: rgba(255, 255, 255, .08);
+        margin: 8px 14px;
+      }
+      .menu .m-start {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        background: var(--white-btn);
+        color: var(--btn-ink);
+        margin: 6px 8px 0;
+        padding: 13px 16px;
+        border-radius: 14px;
+        font-weight: 600;
+      }
+      .menu .m-start:hover {
+        background: #fff;
+        color: var(--btn-ink);
+      }
+      .menu .m-start .arw {
+        width: 13px;
+        height: 11px;
+      }
+    }
+
+    /* --- MOBILE: max-width 552px --- */
+    @media (max-width: 552px) {
+      :root { --u: 1px; }
+      .nav { height: 56px; padding: 0 20px; }
+      .logo { font-size: 20px; letter-spacing: -.4px; }
+      .burger { width: 42px; height: 36px; }
+      .hero-inner {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        width: auto;
+        max-width: none;
+        padding: 0 20px;
+        transform: translateY(-47%);
+      }
+      h1 {
+        font-size: min(74px, calc((100vw - 44px) / 6.9));
+        line-height: 1.04;
+        letter-spacing: -.02em;
+      }
+      .sub {
+        margin-top: 16px;
+        font-size: clamp(15.5px, 4vw, 16.5px);
+        line-height: 1.6;
+        letter-spacing: 0;
+        max-width: 42ch;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .sub br { display: none; }
+      .ctas {
+        margin-top: 24px;
+        gap: 10px;
+        transform: none;
+        flex-wrap: wrap;
+      }
+      .btn-lg {
+        height: 46px;
+        border-radius: 23px;
+        font-size: 15px;
+        gap: 9px;
+      }
+      .btn-primary { padding-left: 20px; padding-right: 21px; }
+      .btn-ghost { padding-left: 19px; padding-right: 20px; }
+      .btn-lg .arw { width: 13px; height: 11px; }
+      .menu {
+        top: 50px;
+        left: 16px;
+        right: 16px;
+        width: auto;
+      }
+      .menu a { font-size: 15.5px; padding: 13px 14px; }
+      .menu .m-start { padding: 14px 16px; }
+    }
+
+    /* --- NARROW PHONES: max-width 353px --- */
+    @media (max-width: 353px) {
+      .ctas { flex-direction: column; align-items: center; }
+      .btn-lg { width: min(100%, 272px); }
+    }
+
+    /* --- SHORT LANDSCAPE: max-width 552px and max-height 460px --- */
+    @media (max-width: 552px) and (max-height: 460px) {
+      h1 { font-size: min(44px, calc((100vw - 44px) / 6.9)); }
+      .sub { margin-top: 12px; font-size: 15px; line-height: 1.5; }
+      .ctas { margin-top: 18px; }
+      .hero-inner { transform: translateY(-44%); }
+    }
+
+    /* ============================================================
+       9. ENTRANCE SEQUENCE
+       ============================================================ */
+    html.anim .ln { overflow: hidden; padding-top: .26em; margin-top: -.26em; }
+    html.anim .ln-i { transform: translateY(100%); }
+    html.anim .logo,
+    html.anim .nav-links a,
+    html.anim .nav-actions .btn,
+    html.anim .burger,
+    html.anim .sub,
+    html.anim .ctas .btn {
+      opacity: 0;
+    }
+
+    .ln-i,
+    .logo,
+    .nav-links a,
+    .nav-actions .btn,
+    .sub,
+    .ctas .btn {
+      will-change: transform, opacity;
+    }
+
+    @keyframes lineRise {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    @keyframes subIn {
+      from { opacity: 0; transform: translateY(calc(14 * var(--u))); filter: blur(4px); }
+      to { opacity: 1; transform: none; filter: blur(0); }
+    }
+    @keyframes subInFlat {
+      from { opacity: 0; transform: translateY(calc(12 * var(--u))); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes pillIn {
+      from { opacity: 0; transform: translateY(calc(8 * var(--u))) scale(.972); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes liftIn {
+      from { opacity: 0; transform: translateY(calc(9 * var(--u))); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes logoIn {
+      from { opacity: 0; transform: translateY(calc(-2.4 * var(--u))) translateY(calc(9 * var(--u))); }
+      to { opacity: 1; transform: translateY(calc(-2.4 * var(--u))); }
+    }
+
+    html.anim.go .ln-i { animation: lineRise 1.05s var(--e-reveal) both; }
+    html.anim.go .ln:nth-child(1) .ln-i { animation-delay: .12s; }
+    html.anim.go .ln:nth-child(2) .ln-i { animation-delay: .22s; }
+    html.anim.go .logo { animation: logoIn .62s var(--e-soft) .46s both; }
+    html.anim.go .nav-links a { animation: liftIn .55s var(--e-soft) both; }
+    html.anim.go .nav-links a:nth-child(1) { animation-delay: .540s; }
+    html.anim.go .nav-links a:nth-child(2) { animation-delay: .585s; }
+    html.anim.go .nav-links a:nth-child(3) { animation-delay: .630s; }
+    html.anim.go .nav-links a:nth-child(4) { animation-delay: .675s; }
+    html.anim.go .nav-links a:nth-child(5) { animation-delay: .720s; }
+    html.anim.go .sub { animation: subIn .85s var(--e-reveal) .58s both; }
+    html.anim.go .btn-login { animation: pillIn .55s var(--e-soft) .68s both; }
+    html.anim.go .burger { animation: pillIn .55s var(--e-soft) .68s both; }
+    html.anim.go .btn-nav-start { animation: pillIn .55s var(--e-soft) .73s both; }
+    html.anim.go .ctas .btn-primary { animation: pillIn .70s var(--e-reveal) .90s both; }
+    html.anim.go .ctas .btn-ghost { animation: pillIn .70s var(--e-reveal) .97s both; }
+
+    @media (max-width: 552px) {
+      html.anim.go .sub { animation-name: subInFlat; }
+      html.anim.go .ln-i { animation-duration: .92s; }
+      html.anim.go .ctas .btn-primary { animation-delay: .84s; }
+      html.anim.go .ctas .btn-ghost { animation-delay: .90s; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html.anim .ln { overflow: visible; padding-top: 0; margin-top: 0; }
+      html.anim .ln-i { transform: none; }
+      html.anim .logo,
+      html.anim .nav-links a,
+      html.anim .nav-actions .btn,
+      html.anim .burger,
+      html.anim .sub,
+      html.anim .ctas .btn {
+        opacity: 1;
+      }
+      * { transition: none !important; animation: none !important; }
+    }
+  </style>
+
+  <!-- 10.A) ENTRANCE SCRIPT (in <head> immediately after </style>) -->
+  <script>
+    (function () {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var doc = document.documentElement;
+      doc.classList.add('anim');
+
+      var cleaned = false;
+      function clean() {
+        if (cleaned) return;
+        cleaned = true;
+        doc.classList.remove('anim', 'go');
+        window.removeEventListener('animationend', onEnd, true);
+      }
+
+      function onEnd(e) {
+        if (e.animationName === 'pillIn' && e.target && e.target.classList && e.target.classList.contains('btn-ghost')) {
+          clean();
+        }
+      }
+
+      var started = false;
+      function start() {
+        if (started) return;
+        started = true;
+        window.addEventListener('animationend', onEnd, true);
+        setTimeout(clean, 2600); // safety fallback
+        doc.classList.add('go');
+      }
+
+      function boot() {
+        var timer = setTimeout(start, 900);
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(function () {
+            clearTimeout(timer);
+            start();
+          }, function () {
+            clearTimeout(timer);
+            start();
+          });
+        } else {
+          start();
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+      } else {
+        boot();
+      }
+    })();
+  </script>
+</head>
+<body>
+  <main class="hero">
+    <!-- 4. VIDEO BACKGROUND -->
+    <div class="bg" role="img" aria-label="Stylised globe of Earth rendered as a purple dot matrix against a starfield, slowly rotating">
+      <video class="bg-video is-active" id="bgVideoA" autoplay muted loop playsinline
+             preload="auto" disablepictureinpicture aria-hidden="true"
+             poster="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/82e7eb75-c65f-490a-99b5-f3d1cad54200.webp">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260912_104036_bd6924f6-3c8e-417e-8465-6d03c8c2e9e6.mp4" type="video/mp4">
+      </video>
+      <video class="bg-video" id="bgVideoB" muted loop playsinline
+             preload="auto" disablepictureinpicture aria-hidden="true"
+             poster="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/82e7eb75-c65f-490a-99b5-f3d1cad54200.webp">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260912_104036_bd6924f6-3c8e-417e-8465-6d03c8c2e9e6.mp4" type="video/mp4">
+      </video>
+    </div>
+
+    <!-- 5. NAV HEADER -->
+    <header class="nav">
+      <a href="#" class="logo">
+        <span>CHITRAGUPTA</span>
+        <span class="logo-badge">Gov.Forensics</span>
+      </a>
+
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#features" class="trigger-login">Facial Synthesis</a>
+        <a href="#biometrics" class="trigger-login">Vector Matching</a>
+        <a href="#registry" class="trigger-login">Suspect Database</a>
+        <a href="#audit" class="trigger-login">Chain of Custody</a>
+        <a href="#portal" class="trigger-login">Crime Cell Portal</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="btn btn-login" id="openLoginBtn">Login</button>
+        <button class="btn btn-nav-start" id="navStartBtn">
+          <span>Enter System</span>
+          <svg class="arw" viewBox="0 0 12 10" fill="none" aria-hidden="true">
+            <path d="M0.8 5h10M7.1 1.4 10.9 5l-3.8 3.6" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="menu">
+        <span></span>
+      </button>
+    </header>
+
+    <!-- 7. MOBILE MENU -->
+    <nav class="menu" id="menu" aria-label="Mobile">
+      <a href="#features" class="trigger-login">Facial Synthesis</a>
+      <a href="#biometrics" class="trigger-login">Vector Matching</a>
+      <a href="#registry" class="trigger-login">Suspect Database</a>
+      <a href="#audit" class="trigger-login">Chain of Custody</a>
+      <a href="#portal" class="trigger-login">Crime Cell Portal</a>
+      <div class="divider"></div>
+      <a href="#login" id="mOpenLoginBtn">Officer Login</a>
+      <a href="#login" class="m-start" id="mStartBtn">
+        <span>Enter System</span>
+        <svg class="arw" viewBox="0 0 12 10" fill="none" aria-hidden="true">
+          <path d="M0.8 5h10M7.1 1.4 10.9 5l-3.8 3.6" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </nav>
+
+    <!-- 6. HERO CONTENT -->
+    <div class="hero-inner">
+      <h1>
+        <span class="ln"><span class="ln-i">Forensic</span></span>
+        <span class="ln"><span class="ln-i">intelligence</span></span>
+      </h1>
+      <p class="sub">
+        Synthesize courtroom-admissible forensic facial composites from witness statements,<br>
+        cross-reference suspects against criminal biometric registries with real-time vector matching,<br>
+        and maintain cryptographically sealed immutable chains of custody for law enforcement.
+      </p>
+      <div class="ctas">
+        <button class="btn btn-lg btn-primary" id="heroStartBtn">
+          <span>Enter System</span>
+          <svg class="arw" viewBox="0 0 12 10" fill="none" aria-hidden="true">
+            <path d="M0.8 5h10M7.1 1.4 10.9 5l-3.8 3.6" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="btn btn-lg btn-ghost" id="heroLoginBtn">
+          <span>Officer Login</span>
+          <svg class="arw" viewBox="0 0 12 10" fill="none" aria-hidden="true">
+            <path d="M0.8 5h10M7.1 1.4 10.9 5l-3.8 3.6" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- LAW ENFORCEMENT LOGIN MODAL -->
+  <div class="modal-overlay" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <button class="modal-close" id="modalCloseBtn" aria-label="Close dialog">&times;</button>
+      <div class="modal-header">
+        <div class="modal-emblem">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <h2 class="modal-title" id="modalTitle">CHITRAGUPTA</h2>
+        <p class="modal-subtitle">Authorized Forensic Personnel Access</p>
+      </div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="loginEmail">Officer Email Address</label>
+          <input type="email" id="loginEmail" class="form-input" placeholder="officer@forensics.pd.gov" required autocomplete="username" value="sconnor@forensics.pd.gov">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="loginPassword">Security Password / Key</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="••••••••••••" required autocomplete="current-password" value="ForensicBadge#2026">
+        </div>
+
+        <div class="demo-officers">
+          <div class="demo-officers-label">One-Click Officer Clearance Profiles:</div>
+          <div class="demo-pills">
+            <button type="button" class="demo-pill" data-email="sconnor@forensics.pd.gov" data-role="investigator">Det. Sarah Connor</button>
+            <button type="button" class="demo-pill" data-email="jgordon@forensics.pd.gov" data-role="lead_investigator">Insp. James Gordon</button>
+            <button type="button" class="demo-pill" data-email="rholt@forensics.pd.gov" data-role="admin">Capt. Raymond Holt</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitLoginBtn">
+          <span id="btnSubmitText">Verify Badge & Enter System</span>
+          <svg class="arw" viewBox="0 0 12 10" fill="none" aria-hidden="true" style="width:12px;height:10px">
+            <path d="M0.8 5h10M7.1 1.4 10.9 5l-3.8 3.6" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </form>
+
+      <div class="modal-notice">
+        Protected under National Forensic & Cyber Investigation Protocols.<br>
+        All authorization sessions are cryptographically recorded in the audit trail.
+      </div>
+    </div>
+  </div>
+
+  <!-- 10.B) BURGER & LOGIN MODAL SCRIPTS -->
+  <script>
+    (function () {
+      // --- BURGER MENU LOGIC ---
+      var burger = document.getElementById('burger');
+      var menu = document.getElementById('menu');
+
+      function setMenu(open) {
+        if (!menu || !burger) return;
+        menu.classList.toggle('open', open);
+        burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      }
+
+      if (burger && menu) {
+        burger.addEventListener('click', function (e) {
+          e.stopPropagation();
+          setMenu(!menu.classList.contains('open'));
+        });
+
+        menu.addEventListener('click', function (e) {
+          if (e.target.tagName === 'A' || e.target.closest('a')) {
+            setMenu(false);
+          }
+        });
+
+        document.addEventListener('click', function (e) {
+          if (menu.classList.contains('open') && !menu.contains(e.target) && !burger.contains(e.target)) {
+            setMenu(false);
+          }
+        });
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && menu.classList.contains('open')) {
+            setMenu(false);
+            burger.focus();
+          }
+        });
+      }
+
+      // --- LOGIN MODAL & AUTHENTICATION LOGIC ---
+      var modal = document.getElementById('loginModal');
+      var modalClose = document.getElementById('modalCloseBtn');
+      var loginForm = document.getElementById('loginForm');
+      var emailInput = document.getElementById('loginEmail');
+      var passInput = document.getElementById('loginPassword');
+      var submitBtn = document.getElementById('submitLoginBtn');
+      var submitText = document.getElementById('btnSubmitText');
+
+      function openModal() {
+        if (!modal) return;
+        modal.classList.add('is-open');
+        setMenu(false);
+        if (emailInput) setTimeout(function () { emailInput.focus(); }, 120);
+      }
+
+      function closeModal() {
+        if (!modal) return;
+        modal.classList.remove('is-open');
+      }
+
+      // Connect modal triggers
+      var triggers = [
+        document.getElementById('openLoginBtn'),
+        document.getElementById('navStartBtn'),
+        document.getElementById('mOpenLoginBtn'),
+        document.getElementById('mStartBtn'),
+        document.getElementById('heroStartBtn'),
+        document.getElementById('heroLoginBtn')
+      ];
+      triggers.forEach(function (btn) {
+        if (btn) btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          openModal();
+        });
+      });
+
+      var linkTriggers = document.querySelectorAll('.trigger-login');
+      linkTriggers.forEach(function (link) {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          openModal();
+        });
+      });
+
+      if (modalClose) modalClose.addEventListener('click', closeModal);
+
+      if (modal) {
+        modal.addEventListener('click', function (e) {
+          if (e.target === modal) closeModal();
+        });
+      }
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal && modal.classList.contains('is-open')) {
+          closeModal();
+        }
+      });
+
+      // Demo Clearance Pills
+      var pills = document.querySelectorAll('.demo-pill');
+      pills.forEach(function (pill) {
+        pill.addEventListener('click', function () {
+          var email = pill.getAttribute('data-email');
+          if (emailInput && email) emailInput.value = email;
+          if (passInput) passInput.value = 'ForensicBadge#2026';
+        });
+      });
+
+      // Login Submission Handler
+      if (loginForm) {
+        loginForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var email = (emailInput ? emailInput.value : '').trim();
+          var password = (passInput ? passInput.value : '').trim();
+
+          if (!email || !password) return;
+
+          // High-tech verification pulse feedback
+          if (submitBtn) submitBtn.disabled = true;
+          if (submitText) submitText.textContent = 'Verifying Biometric Token...';
+
+          setTimeout(function () {
+            if (submitText) submitText.textContent = 'Clearance Granted. Entering System...';
+
+            // Store officer authentication session
+            try {
+              var officerData = {
+                authenticated: true,
+                email: email,
+                badgeId: 'BADGE-' + Math.floor(1000 + Math.random() * 9000),
+                clearanceLevel: 'LEVEL_4_FULL_ACCESS',
+                timestamp: new Date().toISOString()
+              };
+              localStorage.setItem('chitragupta_officer', JSON.stringify(officerData));
+              localStorage.setItem('forensic_auth_token', 'jwt_' + Date.now());
+            } catch (err) {}
+
+            setTimeout(function () {
+              // Direct navigation into the CHITRAGUPTA application
+              var isVitePublic = window.location.port === '5173' && window.location.pathname.includes('landing');
+              var isFileProtocol = window.location.protocol === 'file:';
+
+              if (isVitePublic) {
+                window.location.href = '/';
+              } else if (isFileProtocol) {
+                window.location.href = 'http://localhost:5173/';
+              } else {
+                window.location.href = './';
+              }
+            }, 500);
+          }, 800);
+        });
+      }
+
+      // Check URL hash for direct #login trigger
+      if (window.location.hash === '#login') {
+        openModal();
+      }
+    })();
+  </script>
+
+  <!-- 10.C) BACKGROUND VIDEO SEAMLESS CROSS-FADE SCRIPT (LAST in <body>) -->
+  <script>
+    (function () {
+      var A = document.getElementById('bgVideoA');
+      var B = document.getElementById('bgVideoB');
+      if (!A || !B) return;
+
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        A.removeAttribute('autoplay');
+        try { A.pause(); B.pause(); A.currentTime = 0; } catch (e) {}
+        return;
+      }
+
+      var FADE = 0.9;
+      var cur = A;
+      var nxt = B;
+      var swapping = false;
+
+      function play(v) {
+        var p = v.play();
+        if (p && typeof p.catch === 'function') p.catch(function () {});
+      }
+
+      play(A);
+
+      function tick() {
+        if (swapping || !cur.duration) return;
+        if (cur.duration - cur.currentTime > FADE) return;
+
+        swapping = true;
+        var out = cur;
+        nxt.currentTime = 0;
+        play(nxt);
+        nxt.classList.add('is-active');
+        out.classList.remove('is-active');
+
+        // Swap references
+        var tmp = cur;
+        cur = nxt;
+        nxt = tmp;
+
+        setTimeout(function () {
+          try {
+            out.pause();
+            out.currentTime = 0;
+          } catch (e) {}
+          swapping = false;
+        }, Math.round(FADE * 1000 + 100));
+      }
+
+      A.addEventListener('timeupdate', tick);
+      B.addEventListener('timeupdate', tick);
+    })();
+  </script>
+</body>
+</html>
+
