@@ -1,7 +1,24 @@
 /**
  * Multilingual Speech-to-Text (STT) and Text-to-Speech (TTS) utilities.
- * Supports English (en-IN), Hindi (hi-IN), and Kannada (kn-IN).
+ * Comprehensive support for pan-Indian and international languages.
  */
+
+export const SUPPORTED_LANGUAGES = [
+  { code: 'en-IN', name: 'English (India)', label: 'English (India) - en-IN' },
+  { code: 'hi-IN', name: 'Hindi (हिन्दी)', label: 'Hindi (हिन्दी) - hi-IN' },
+  { code: 'kn-IN', name: 'Kannada (ಕನ್ನಡ)', label: 'Kannada (ಕನ್ನಡ) - kn-IN' },
+  { code: 'ta-IN', name: 'Tamil (தமிழ்)', label: 'Tamil (தமிழ்) - ta-IN' },
+  { code: 'te-IN', name: 'Telugu (తెలుగు)', label: 'Telugu (తెలుగు) - te-IN' },
+  { code: 'bn-IN', name: 'Bengali (বাংলা)', label: 'Bengali (বাংলা) - bn-IN' },
+  { code: 'mr-IN', name: 'Marathi (मराठी)', label: 'Marathi (मराठी) - mr-IN' },
+  { code: 'gu-IN', name: 'Gujarati (ગુજરાતી)', label: 'Gujarati (ગુજરાતી) - gu-IN' },
+  { code: 'ml-IN', name: 'Malayalam (മലയാളം)', label: 'Malayalam (മലയാളം) - ml-IN' },
+  { code: 'pa-IN', name: 'Punjabi (ਪੰਜਾਬੀ)', label: 'Punjabi (ਪੰਜਾਬੀ) - pa-IN' },
+  { code: 'ur-IN', name: 'Urdu (اردو)', label: 'Urdu (اردو) - ur-IN' },
+  { code: 'es-ES', name: 'Spanish (Español)', label: 'Spanish (Español) - es-ES' },
+  { code: 'fr-FR', name: 'French (Français)', label: 'French (Français) - fr-FR' },
+  { code: 'ar-SA', name: 'Arabic (العربية)', label: 'Arabic (العربية) - ar-SA' }
+];
 
 export function isSpeechRecognitionSupported() {
   return typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window);

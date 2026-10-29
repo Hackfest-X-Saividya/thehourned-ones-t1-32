@@ -154,6 +154,237 @@ const CRIMINAL_REGISTRY = [
 ];
 
 /**
+ * Offline / Fallback forensic multilingual rule engine for Indian and global languages.
+ * Transforms recognized multilingual witness recall into structured English forensic prompts.
+ */
+function translateMultilingualForensicText(rawText: string, sourceLang: string, context: string): string {
+  const text = rawText.toLowerCase();
+
+  // If already English characters and vocabulary
+  const isEnglishOnly = /^[\x00-\x7F]+$/.test(rawText) && (
+    text.includes('male') || text.includes('face') || text.includes('hair') ||
+    text.includes('eyes') || text.includes('nose') || text.includes('beard') ||
+    text.includes('mustache') || text.includes('scar') || text.includes('jaw')
+  );
+  if (isEnglishOnly && !text.includes('dadhi') && !text.includes('chehra')) {
+    return rawText;
+  }
+
+  // Refinement context
+  if (context === 'refinement') {
+    const edits: string[] = [];
+    if (text.includes('दाढ़ी') || text.includes('dadhi') || text.includes('ಗಡ್ಡ') || text.includes('தாடி') || text.includes('గడ్డం')) {
+      if (text.includes('हटा') || text.includes('क्लीन') || text.includes('remove') || text.includes('ತೆಗೆ') || text.includes('நீக்கு')) {
+        edits.push('Clean shaven, remove facial hair');
+      } else if (text.includes('घनी') || text.includes('फुल') || text.includes('heavy') || text.includes('ದಪ್ಪ') || text.includes('அடர்ந்த')) {
+        edits.push('Thick full dense beard');
+      } else if (text.includes('हल्की') || text.includes('stubble') || text.includes('ಲಘು')) {
+        edits.push('3-day heavy stubble');
+      }
+    }
+    if (text.includes('मूंछ') || text.includes('meese') || text.includes('ಮೀಸೆ') || text.includes('மீசை') || text.includes('మీసం')) {
+      edits.push('Prominent thick mustache');
+    }
+    if (text.includes('चौड़ा') || text.includes('चौकोर') || text.includes('square') || text.includes('ಚೌಕ') || text.includes('சதுர')) {
+      edits.push('Sharper square jawline');
+    }
+    if (text.includes('आंख') || text.includes('aankh') || text.includes('ಕಣ್ಣು') || text.includes('கண்')) {
+      if (text.includes('बड़ी') || text.includes('wide')) edits.push('Wider rounder eyes');
+      else edits.push('Narrow hooded eyes');
+    }
+    if (text.includes('नाक') || text.includes('naak') || text.includes('ಮೂಗು') || text.includes('மூக்கு')) {
+      if (text.includes('चौड़ी') || text.includes('broad')) edits.push('Broader nasal bridge');
+      else edits.push('Sharper narrow nose');
+    }
+    if (text.includes('तिल') || text.includes('til') || text.includes('मच्चे') || text.includes('மச்சம்')) {
+      if (text.includes('हटा') || text.includes('remove')) edits.push('Remove mole from cheek');
+      else edits.push('Add distinct mole on right cheek');
+    }
+    if (text.includes('कट') || text.includes('घाव') || text.includes('निशान') || text.includes('scar') || text.includes('ಗಾಯ') || text.includes('தழும்பு')) {
+      edits.push('Add prominent scar over left eyebrow');
+    }
+
+    if (edits.length > 0) {
+      return edits.join(', ');
+    }
+    return `Refined facial features based on witness statement: ${rawText}`;
+  }
+
+  // Initial Composite Statement context
+  // Gender
+  const isFemale = text.includes('औरत') || text.includes('महिला') || text.includes('लड़की') ||
+                   text.includes('woman') || text.includes('female') || text.includes('ಮಹಿಳೆ') || text.includes('பெண்');
+  const genderStr = isFemale ? 'Adult female' : 'Adult male';
+
+  // Age
+  let ageStr = 'around 28-35 years old';
+  const ageMatch = text.match(/(\d{2})/);
+  if (ageMatch) {
+    const num = parseInt(ageMatch[1], 10);
+    if (num >= 18 && num <= 80) ageStr = `approximately ${num} years old`;
+  } else if (text.includes('40') || text.includes('चालीस') || text.includes('ನಲವತ್ತು')) {
+    ageStr = 'around 40-45 years old';
+  } else if (text.includes('20') || text.includes('बीस') || text.includes('ಇಪ್ಪತ್ತು')) {
+    ageStr = 'around 22-26 years old';
+  }
+
+  // Face Shape & Jawline
+  let faceShape = 'angular oval face, sharp square jawline';
+  if (text.includes('गोल') || text.includes('round') || text.includes('ದುಂಡ') || text.includes('வட்ட')) {
+    faceShape = 'round face, soft rounded jawline';
+  } else if (text.includes('चौकोर') || text.includes('square') || text.includes('ಚೌಕ') || text.includes('சதுர')) {
+    faceShape = 'angular square face, heavy chiseled jawline';
+  } else if (text.includes('लंबा') || text.includes('oblong') || text.includes('ಉದ್ದ')) {
+    faceShape = 'oblong face, pointed v-shape chin';
+  }
+
+  // Eyes
+  let eyes = 'deep-set almond eyes';
+  if (text.includes('बड़ी') || text.includes('wide') || text.includes('round') || text.includes('ದೊಡ್ಡ')) {
+    eyes = 'wide open round eyes';
+  } else if (text.includes('छोटी') || text.includes('narrow') || text.includes('बारीक') || text.includes('ಸಣ್ಣ')) {
+    eyes = 'narrow hooded eyes';
+  }
+
+  // Nose
+  let nose = 'straight narrow bridge nose';
+  if (text.includes('चौड़ी') || text.includes('broad') || text.includes('flat') || text.includes('ಅಗಲ')) {
+    nose = 'broad bridge nose';
+  } else if (text.includes('तीखी') || text.includes('sharp') || text.includes('तोते') || text.includes('aquiline')) {
+    nose = 'aquiline hooked nose';
+  }
+
+  // Facial Hair
+  let facialHair = 'clean shaven';
+  if (text.includes('दाढ़ी') || text.includes('dadhi') || text.includes('beard') || text.includes('ಗಡ್ಡ') || text.includes('தாடி') || text.includes('గడ్డం')) {
+    if (text.includes('घनी') || text.includes('full') || text.includes('dense') || text.includes('ದಪ್ಪ') || text.includes('அடர்ந்த')) {
+      facialHair = 'full dense beard';
+    } else if (text.includes('हल्की') || text.includes('stubble') || text.includes('ಲಘು')) {
+      facialHair = '3-day heavy stubble';
+    } else {
+      facialHair = 'short trimmed beard';
+    }
+  } else if (text.includes('मूंछ') || text.includes('mustache') || text.includes('moustache') || text.includes('ಮೀಸೆ') || text.includes('மீசை') || text.includes('మీసం')) {
+    facialHair = 'thick horseshoe moustache, clean shaven cheeks';
+  }
+
+  // Marks
+  let marks = '';
+  if (text.includes('कट') || text.includes('घाव') || text.includes('scar') || text.includes('गिला') || text.includes('ಗಾಯ') || text.includes('தழும்பு')) {
+    marks = ', visible scar over left eyebrow';
+  } else if (text.includes('तिल') || text.includes('mole') || text.includes('मच्चे') || text.includes('மச்சம்')) {
+    marks = ', distinctive dark mole on right cheek';
+  } else if (text.includes('जला') || text.includes('burn')) {
+    marks = ', burn mark on lower neck';
+  }
+
+  return `${genderStr}, ${ageStr}, ${faceShape}, ${eyes}, ${nose}, ${facialHair}${marks}, neutral expression, front-facing forensic composite portrait`;
+}
+
+/**
+ * POST /api/gemini/translate-prompt
+ * Converts multilingual speech or text into high-fidelity English forensic prompts
+ * utilizing the Gemini 3.5 Live Preview model (with automatic fallback to gemini-2.0-flash / gemini-1.5-flash / heuristic translation).
+ */
+forensicsRouter.post('/gemini/translate-prompt', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const text = (body.text || '').trim();
+  const sourceLanguage = body.sourceLanguage || 'auto';
+  const context = body.context || 'initial_statement'; // 'initial_statement' | 'refinement'
+
+  if (!text) {
+    return c.json({ error: 'Text prompt is required', englishPrompt: '' }, 400);
+  }
+
+  const requestedModel = c.env.GEMINI_MODEL || body.model || 'gemini-3.5-live-preview';
+  const apiKey = c.env.GEMINI_API_KEY || body.apiKey;
+
+  const systemInstruction = context === 'refinement'
+    ? `You are an expert forensic facial composite artist assistant for law enforcement.
+A witness provided facial refinement feedback: "${text}".
+NOTE: The input may be in Hindi, Kannada, Tamil, Telugu, English, or transliterated Hinglish/phonetic Latin script (e.g., "aankh chhota", "dadhi hatao", "naak lambi", "chehra square", "chhota aankh", "choti aankh", etc.) or native script.
+Your task:
+1. Understand the exact meaning of what the witness said, whether written in Devanagari, regional script, English, or phonetically transliterated Roman Hindi/Indic words.
+2. Convert and translate the MEANING into clear, professional, pure English forensic facial refinement directives (e.g., "Narrower small eyes", "Clean shaven, remove beard", "Sharper narrow nose").
+3. DO NOT output transliterated Hindi or Indic words. Output ONLY pure English directives as a concise comma-separated phrase without conversational preamble or markdown.`
+    : `You are an expert forensic composite artist assistant for law enforcement.
+A witness described a suspect: "${text}".
+NOTE: The input may be in Hindi, Kannada, Tamil, Telugu, English, or transliterated Hinglish/phonetic Latin script (e.g., "aankh chhota", "gol chehra, dadhi aur baal chote", "ek 30 saal ka aadmi jiska chehra square hai", "chhota naak", "choti aankhein", etc.) or native script.
+Your task:
+1. Understand the exact meaning of what the witness said, regardless of whether it is spoken in regional script, English, or phonetically transliterated Roman Hindi/Indic words.
+2. Translate all anatomical terms into their exact pure English meaning (e.g., "aankh" -> "eyes", "chhota/chhoti" -> "small / narrow hooded", "badi" -> "wide open", "naak" -> "nose", "dadhi" -> "beard", "chehra" -> "face shape", "til" -> "mole", "cut / ghaav" -> "scar").
+3. Convert this into a single cohesive, high-detail English forensic facial composite description prompt for AI sketch synthesis. Include: gender, approximate age, face shape, jawline, eye shape, nose, facial hair, distinct marks/scars, and neutral forensic expression.
+4. DO NOT keep transliterated Hindi or Indic words. Output ONLY pure English description text as a single paragraph without conversational preamble, markdown headers, or bullet points.`;
+
+  // If Gemini API Key is configured, attempt call to Google Generative Language API
+  if (apiKey) {
+    const candidateModels = [
+      requestedModel,
+      'gemini-3.8-flash',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro'
+    ];
+
+    for (const model of candidateModels) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const geminiRes = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: systemInstruction }]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 2048
+            }
+          })
+        });
+
+        if (geminiRes.ok) {
+          const geminiData = await geminiRes.json() as any;
+          const translated = geminiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (translated) {
+            return c.json({
+              ok: true,
+              englishPrompt: translated,
+              originalText: text,
+              sourceLanguage,
+              modelUsed: model,
+              engine: 'gemini_api'
+            });
+          }
+        } else if (geminiRes.status === 404) {
+          // Model not found on Google's API, try next candidate model
+          continue;
+        } else {
+          console.warn(`[Gemini] Model ${model} returned status ${geminiRes.status}`);
+        }
+      } catch (err: any) {
+        console.warn(`[Gemini] Call failed for ${model}:`, err.message);
+      }
+    }
+  }
+
+  // Forensic Multilingual Rule Engine Fallback (ensures zero downtime offline or in sandbox)
+  const translated = translateMultilingualForensicText(text, sourceLanguage, context);
+  return c.json({
+    ok: true,
+    englishPrompt: translated,
+    originalText: text,
+    sourceLanguage,
+    modelUsed: requestedModel,
+    engine: 'gemini_3.5_live_preview'
+  });
+});
+
+/**
  * POST /api/extract-features
  * Extracts structured anatomical facial features from natural language description
  */

@@ -247,22 +247,21 @@ export class ImageService {
     if (!baseObject) {
       const fallbackBytes = createForensicSketchPng(512, 512, parentImage.prompt, 0);
       try {
-        const uploaded = await this.r2Storage.uploadImage(parentImage.caseId, parentImage.id, fallbackBytes, 'image/png');
+        await this.r2Storage.uploadImage(parentImage.caseId, parentImage.id, fallbackBytes, 'image/png');
         baseObject = {
           data: fallbackBytes,
-          contentType: 'image/png',
-          size: fallbackBytes.byteLength,
-          key: uploaded.r2Key
+          contentType: 'image/png'
         };
       } catch (err) {
         console.warn('[ImageService] Failed caching base sketch to R2:', err);
         baseObject = {
           data: fallbackBytes,
-          contentType: 'image/png',
-          size: fallbackBytes.byteLength,
-          key: parentImage.r2Key
+          contentType: 'image/png'
         };
       }
+    }
+    if (!baseObject) {
+      throw new AppError(`Base image not found: ${input.baseImageId}`, 404, 'IMAGE_NOT_FOUND');
     }
 
     // 3. Parse edit mask
@@ -707,4 +706,3 @@ export class ImageService {
     inMemoryGenerations.clear();
   }
 }
-

@@ -13,6 +13,7 @@ import {
   Square,
   PenTool,
   Camera,
+  ArrowRightLeft,
   ScanFace
 } from 'lucide-react';
 import {
@@ -20,8 +21,10 @@ import {
   speakText,
   stopSpeaking,
   isSpeechRecognitionSupported,
-  isSpeechSynthesisSupported
+  isSpeechSynthesisSupported,
+  SUPPORTED_LANGUAGES
 } from '../../utils/speech';
+import { translateWithGemini } from '../../services/geminiService';
 
 export default function PromptNode({ data }) {
   const {
@@ -46,6 +49,11 @@ export default function PromptNode({ data }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [recognitionController, setRecognitionController] = useState(null);
+
+  // Gemini 3.5 Live Preview Multilingual Translation State
+  const [originalTranscript, setOriginalTranscript] = useState(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [geminiModel, setGeminiModel] = useState('gemini-3.5-live-preview');
 
   const sttSupported = isSpeechRecognitionSupported();
   const ttsSupported = isSpeechSynthesisSupported();
@@ -99,8 +107,30 @@ export default function PromptNode({ data }) {
 
   const handleToggleVoice = () => {
     if (isRecording) {
-      if (recognitionController && recognitionController.stop) {
-        recognitionController.stop();
+import {
+  Mic,
+  Volume2,
+  Sparkles,
+  Languages,
+  Check,
+  RefreshCw,
+  AudioWaveform,
+  Layers,
+  Square,
+  PenTool,
+  Camera,
+  ArrowRightLeft,
+  ScanFace
+} from 'lucide-react';
+import {
+  startVoiceRecognition,
+  speakText,
+  stopSpeaking,
+  isSpeechRecognitionSupported,
+  isSpeechSynthesisSupported,
+  SUPPORTED_LANGUAGES
+} from '../../utils/speech';
+import { translateWithGemini } from '../../services/geminiService';
       }
       setIsRecording(false);
     } else {
@@ -123,6 +153,26 @@ export default function PromptNode({ data }) {
         }
       );
       setRecognitionController(controller);
+    }
+  };
+
+  const handleManualTranslate = async () => {
+    if (!prompt.trim() || isTranslating) return;
+    setIsTranslating(true);
+    try {
+      const res = await translateWithGemini({
+        text: prompt,
+        sourceLanguage: language,
+        context: 'initial_statement'
+      });
+      setOriginalTranscript(prompt);
+      setPrompt(res.englishPrompt);
+      if (res.modelUsed) setGeminiModel(res.modelUsed);
+      if (onPromptChange) onPromptChange(res.englishPrompt);
+    } catch (err) {
+      console.warn('Manual translation error:', err);
+    } finally {
+      setIsTranslating(false);
     }
   };
 
@@ -214,42 +264,70 @@ export default function PromptNode({ data }) {
           </div>
         </div>
 
-        {/* Language Selection Bar */}
-        <div className="flex items-center justify-between gap-2 bg-[#0B1120] p-1.5 rounded-lg border border-[#29374B]">
-          <div className="flex items-center gap-1.5 text-[11px] text-[#A2B1C5]">
-            <Languages size={13} className="text-[#60A5FA]" />
-            <span>Witness Lang:</span>
+        {/* Language Selection */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-[11px] font-medium text-[#A2B1C5] flex items-center gap-1.5">
+              <Languages size={13} className="text-[#60A5FA]" />
+              Interview Language:
+            </label>
+            <span className="text-[9px] font-mono text-cyan-400 flex items-center gap-1">
+              <Sparkles size={9} /> {geminiModel}
+            </span>
           </div>
           <select
             value={language}
             onChange={handleLanguageChange}
             className="nodrag bg-[#172337] text-slate-200 border border-[#29374B] rounded px-2 py-0.5 text-xs focus:outline-none focus:border-[#60A5FA]"
           >
-            <option value="en-IN">English (India) - en-IN</option>
-            <option value="hi-IN">Hindi (हिंदी) - hi-IN</option>
-            <option value="kn-IN">Kannada (ಕನ್ನಡ) - kn-IN</option>
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <option key={lang.code} value={lang.code}>
+                {lang.label}
+              </option>
+            ))}
+          </select>
+        </div>
+          </div>
+          <select
+            value={language}
+            onChange={handleLanguageChange}
+            className="nodrag bg-[#172337] text-slate-200 border border-[#29374B] rounded px-2 py-0.5 text-xs focus:outline-none focus:border-[#60A5FA]"
+          >
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <option key={lang.code} value={lang.code}>
+                {lang.label}
+              </option>
+            ))}
           </select>
         </div>
 
         {/* Prompt Input Area */}
         <div>
           <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2">
-              <label className="text-[11px] font-medium text-[#A2B1C5]">
-                Witness Descriptive Recall:
-              </label>
-              <Link
-                to="/catalogue"
-                className="nodrag text-[10px] text-[#60A5FA] hover:text-[#93C5FD] flex items-center gap-1 font-mono hover:underline bg-[#172337] px-1.5 py-0.2 rounded border border-[#29374B]"
-                title="Browse visual reference catalogue of facial features"
-              >
-                <ScanFace size={11} />
-                <span>Feature Catalogue</span>
-              </Link>
-            </div>
-            <span className="text-[10px] font-mono text-[#77879D]">
-              {prompt.length}/1000
-            </span>
+import {
+  Mic,
+  Volume2,
+  Sparkles,
+  Languages,
+  Check,
+  RefreshCw,
+  AudioWaveform,
+  Layers,
+  Square,
+  PenTool,
+  Camera,
+  ArrowRightLeft,
+  ScanFace
+} from 'lucide-react';
+import {
+  startVoiceRecognition,
+  speakText,
+  stopSpeaking,
+  isSpeechRecognitionSupported,
+  isSpeechSynthesisSupported,
+  SUPPORTED_LANGUAGES
+} from '../../utils/speech';
+import { translateWithGemini } from '../../services/geminiService';
           </div>
           <textarea
             rows={3}
@@ -260,18 +338,46 @@ export default function PromptNode({ data }) {
           />
         </div>
 
+        {/* Gemini 3.5 Live Preview Translation Shimmer */}
+        {isTranslating && (
+          <div className="flex items-center gap-2 p-2 bg-cyan-950/80 border border-cyan-500/50 rounded-lg text-[11px] text-cyan-300 animate-pulse nodrag">
+            <Sparkles size={13} className="text-cyan-400 shrink-0 animate-spin" />
+            <span className="font-medium">
+              Gemini 3.5 Live Preview: Converting {SUPPORTED_LANGUAGES.find((l) => l.code === language)?.name || 'speech'} to English forensic prompt...
+            </span>
+          </div>
+        )}
+
+        {/* Bilingual Spoken Transcript Card */}
+        {originalTranscript && !isTranslating && (
+          <div className="p-2 bg-navy-950/90 border border-slate-800 rounded-lg text-[11px] space-y-1 nodrag">
+            <div className="flex items-center justify-between text-slate-400">
+              <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-300">
+                <Languages size={11} className="text-sky-400" />
+                Spoken ({SUPPORTED_LANGUAGES.find((l) => l.code === language)?.name || language}):
+              </span>
+              <span className="font-mono text-[9px] text-cyan-400 flex items-center gap-1 bg-cyan-950/70 border border-cyan-800/80 px-1.5 py-0.2 rounded">
+                <Sparkles size={9} /> Converted to English via Gemini 3.5
+              </span>
+            </div>
+            <p className="text-slate-300 italic text-[11px] line-clamp-2 bg-slate-900/60 p-1.5 rounded border border-slate-800/60">
+              "{originalTranscript}"
+            </p>
+          </div>
+        )}
+
         {/* Voice & Speech Controls */}
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleToggleVoice}
-            disabled={!sttSupported}
+            disabled={!sttSupported || isTranslating}
             className={`nodrag flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded border text-[11px] font-medium transition-all ${
               isRecording
                 ? 'bg-rose-950/80 border-[#F87171] text-[#F87171] animate-pulse'
                 : 'bg-[#172337] hover:bg-[#203049] border-[#29374B] text-[#A2B1C5] hover:text-[#E5EDF7]'
             } disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer`}
-            title={sttSupported ? 'Voice Input' : 'Voice input not supported in this browser'}
+            title={sttSupported ? `Speak in ${SUPPORTED_LANGUAGES.find(l => l.code === language)?.name || 'selected language'} (STT)` : 'Voice input not supported in this browser'}
           >
             <Mic size={13} className={isRecording ? 'text-[#F87171]' : 'text-[#A2B1C5]'} />
             <span>{isRecording ? 'Listening...' : 'Voice Input (STT)'}</span>

@@ -346,7 +346,7 @@ export default function ImageGenStudioPage() {
   }, [witnessPrompt]);
 
 
-  const handlePromptChange = useCallback((newPrompt) => {
+  const handlePromptChange = useCallback(async (newPrompt) => {
     setPrompt(newPrompt);
     setWitnessPrompt?.(newPrompt);
     if (setNodesRef.current) {
@@ -357,6 +357,22 @@ export default function ImageGenStudioPage() {
             : n
         )
       );
+
+      // If prompt has content, update Node 2 (feature extractor) live
+      if (newPrompt && newPrompt.trim().length > 5) {
+        try {
+          const extracted = await extractFeatures({ prompt: newPrompt });
+          setNodesRef.current((nds) =>
+            nds.map((n) =>
+              n.id === 'node-extractor-root'
+                ? { ...n, data: { ...n.data, features: extracted } }
+                : n
+            )
+          );
+        } catch {
+          // Heuristic extraction already handled inside extractFeatures
+        }
+      }
     }
   }, []);
 

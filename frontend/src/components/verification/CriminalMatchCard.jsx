@@ -12,7 +12,7 @@ import {
   Sliders
 } from 'lucide-react';
 import Badge from '../common/Badge';
-import { getMugshotFallback } from '../../services/mockCriminalDb';
+import { getEvaluatedSketchForRecord } from '../../services/evaluatedSketches';
 
 /**
  * Circular SVG Radial Progress Gauge for overall combined match percentage.
@@ -71,6 +71,17 @@ export default function CriminalMatchCard({ suspect, queryFeatures, onInspectCom
   const isHighMatch = suspect.combinedScore >= 75.0;
   const isPartialMatch = suspect.combinedScore >= 50.0 && suspect.combinedScore < 75.0;
 
+  const featureLabels = [
+    { key: 'faceShape', label: 'Face Shape' },
+    { key: 'jawline', label: 'Jawline' },
+    { key: 'eyes', label: 'Eyes' },
+    { key: 'nose', label: 'Nose' },
+    { key: 'facialHair', label: 'Facial Hair' },
+    { key: 'marks', label: 'Marks & Scars' }
+  ];
+
+  const matchedCount = suspect.matchedTraits?.length || 0;
+  const recordSketch = getEvaluatedSketchForRecord(suspect);
   return (
     <div
       className={`bg-[#111B2B] border rounded-xl p-4 sm:p-5 transition-all shadow-sm ${
@@ -81,20 +92,20 @@ export default function CriminalMatchCard({ suspect, queryFeatures, onInspectCom
           : 'border-[#29374B]'
       }`}
     >
-      <div className="flex flex-col sm:flex-row gap-4 items-start">
-        {/* Mugshot Image Container with Forensic Framing */}
-        <div className="relative shrink-0 w-28 h-28 sm:w-32 sm:h-32 rounded-lg overflow-hidden border border-[#29374B] bg-[#0B1120] shadow-md">
+      <div className="flex flex-col md:flex-row gap-4 items-start">
+        {/* Locally bundled synthetic graphite sketch for the evaluated record */}
+        <div className="relative shrink-0 w-28 h-36 sm:w-32 sm:h-40 rounded-lg overflow-hidden border border-[#29374B] bg-[#0B1120] shadow-md">
           <img
-            src={suspect.mugshotUrl}
-            alt={suspect.fullName}
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = getMugshotFallback(suspect.gender, suspect.suspectId);
-            }}
-            className="w-full h-full object-cover"
+            src={recordSketch.src}
+            alt={`Synthetic forensic-style reference sketch ${recordSketch.id}`}
+            className="w-full h-full object-contain"
+            loading="lazy"
           />
-          <span className="absolute bottom-1.5 left-1.5 bg-[#0B1120]/90 backdrop-blur-sm text-[10px] font-mono text-[#A2B1C5] px-1.5 py-0.5 rounded border border-[#29374B]">
-            {suspect.gender}, {suspect.age}y
+          <span className="absolute top-1 left-1 bg-[#0B1120]/90 text-[8px] font-mono text-[#A2B1C5] px-1.5 py-0.5 rounded border border-[#29374B]">
+            DEMO SKETCH
+          </span>
+          <span className="absolute bottom-1 left-1 bg-[#0B1120]/90 text-[8px] font-mono text-[#A2B1C5] px-1.5 py-0.5 rounded border border-[#29374B]">
+            {recordSketch.id} ({suspect.gender}, {suspect.age}y)
           </span>
         </div>
 
