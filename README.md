@@ -3,6 +3,11 @@
 > **HackFest 2026** | **Team:** TheHourned Ones (`T1-32`)  
 > **Repository:** Forensic Facial Composite Synthesis, Biometric Matching & Chain-of-Custody Verification Platform
 
+## Contributors
+
+[![Ankush](https://img.shields.io/badge/BLx--Ankush-GitHub-181717?logo=github&logoColor=white)](https://github.com/BLx-Ankush)
+[![Vaishnavi](https://img.shields.io/badge/vaishnavis1603--blip-GitHub-181717?logo=github&logoColor=white)](https://github.com/vaishnavis1603-blip)
+[![ADEEP13](https://img.shields.io/badge/ADEEP13-GitHub-181717?logo=github&logoColor=white)](https://github.com/ADEEP13)
 ---
 
 ## 🏛️ Executive Summary
