@@ -9,41 +9,9 @@
 
 **CHITRAGUPTA** is an enterprise-grade forensic facial composite synthesis and biometric intelligence suite engineered for law enforcement agencies, cyber crime cells, and investigative authorities. The platform transforms fragmented witness testimony — delivered in native scripts or spoken regional languages — into courtroom-admissible, high-fidelity facial composite sketches, cross-references them against criminal biometric databases in real time, and cryptographically seals every revision in an immutable audit ledger.
 
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                               CHITRAGUPTA ARCHITECTURE                                 │
-└────────────────────────────────────────────────────────────────────────────────────────┘
+## System Architecture
 
-  ┌──────────────────────────────────────────────────────────────────────────────────┐
-  │                            REACT 18 FORENSIC FRONTEND                            │
-  │  • Cinematic Video Landing Portal (index.html / landing.html)                    │
-  │  • Node-Based Flow Canvas (Witness Statement → Feature Extractor → Candidates)   │
-  │  • Visual Feature Catalogue (/catalogue — 10 Anatomical Reference Categories)   │
-  │  • Suspect Biometric Verification (/db-verification — Real-Time Vector Matching) │
-  │  • Cryptographic Chain-of-Custody Ledger (/audit-logs)                           │
-  └────────────────────────────────────────┬─────────────────────────────────────────┘
-                                           │ HTTPS / REST (Vite Proxy: /api)
-                                           ▼
-  ┌──────────────────────────────────────────────────────────────────────────────────┐
-  │                    CLOUDFLARE WORKERS SERVERLESS BACKEND (HONO)                  │
-  │  • Case Management & RBAC Authorization Middleware (Token / Badge Verification)   │
-  │  • Gemini Multilingual Translation Service (Hinglish/Regional Speech-to-Text)    │
-  │  • Non-Destructive Version Lineage Engine & Tree Graph                           │
-  │  • Pure TypeScript Region Mask Compositor (Preserves Unselected Pixels)          │
-  │  • Sliding-Window Rate Limiter & Immutable Audit Trail (SHA-256 Digests)         │
-  └───────┬───────────────────────────────┬───────────────────────────────┬──────────┘
-          │                               │                               │
-          ▼                               ▼                               ▼
-┌──────────────────┐            ┌──────────────────┐            ┌──────────────────┐
-│  Cloudflare D1   │            │  Cloudflare R2   │            │   AI Providers   │
-│  (Serverless DB) │            │ (Private Bucket) │            │ (Workers AI &    │
-│ • Cases & Grants │            │ • Full Sketches  │            │  Google Gemini)  │
-│ • Image Lineage  │            │ • Inpaint Masks  │            │ • Flux.1 / SDXL  │
-│ • Audit Ledger   │            │ • Private Stream │            │ • Gemini 3.5 /   │
-│ • Suspect AFIS   │            │ • Zero Egress    │            │   2.5 Flash STT  │
-└──────────────────┘            └──────────────────┘            └──────────────────┘
-```
-
+![CHITRAGUPTA System Architecture](chitragupta-assets/chitragupta-architecture.png)
 ---
 
 ## ✨ Core Platform Capabilities
