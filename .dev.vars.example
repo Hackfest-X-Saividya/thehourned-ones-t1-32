@@ -1,9 +1,9 @@
 # Cloudflare AI Worker Integration (Matches API Handoff Specifications)
-EXTERNAL_WORKER_URL=https://lingering-cake-50cc.adeepag13.workers.dev
+EXTERNAL_WORKER_URL=your-deployed-worker-url-here
 EXTERNAL_WORKER_TOKEN=your-deployed-worker-api-token-here
 
 # Backward compatibility bindings
-CLOUDFLARE_WORKER_URL=https://lingering-cake-50cc.adeepag13.workers.dev
+CLOUDFLARE_WORKER_URL=your-deployed-worker-url-here
 CLOUDFLARE_WORKER_TOKEN=your-deployed-worker-api-token-here
 
 ENVIRONMENT=development
